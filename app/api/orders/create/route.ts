@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { sendOrderConfirmationEmail } from "@/lib/email"
 
+type OrderItem = {
+  order_id: string
+  product_id: string
+  product_name: string
+  product_image: string
+  size: string
+  quantity: number
+  unit_price: number
+  total_price: number
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -131,7 +142,7 @@ export async function POST(request: NextRequest) {
           month: "long",
           day: "numeric",
         }),
-        items: orderItems.map((item) => ({
+        items: orderItems.map((item: OrderItem) => ({
           name: item.product_name,
           size: item.size,
           quantity: item.quantity,
