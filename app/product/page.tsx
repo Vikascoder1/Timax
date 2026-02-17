@@ -266,6 +266,7 @@ function ProductPageContent() {
                 }}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-semibold transition-colors"
               >
+                
                 Add to cart
               </button>
               <button
