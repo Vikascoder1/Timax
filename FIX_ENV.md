@@ -63,3 +63,5 @@ NEXT_PUBLIC_SUPABASE_URL=http://localhost:3000/
 3. Verify the URL in Supabase dashboard matches what's in your `.env`
 4. Make sure there's no trailing slash in the URL
 
+
+

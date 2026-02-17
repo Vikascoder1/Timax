@@ -265,3 +265,5 @@ Body:
   - Regular database backups (Supabase handles this)
   - Export orders periodically for records
 
+
+

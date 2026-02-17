@@ -44,6 +44,12 @@ const indianStates = [
   "Puducherry",
 ]
 
+declare global {
+  interface Window {
+    Razorpay?: any
+  }
+}
+
 export default function CheckoutPage() {
   const { items, getTotal, removeItem } = useCart()
   const { user, loading: authLoading } = useAuth()
@@ -85,6 +91,20 @@ export default function CheckoutPage() {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const loadRazorpayScript = () => {
+    return new Promise<boolean>((resolve) => {
+      if (window.Razorpay) {
+        resolve(true)
+        return
+      }
+      const script = document.createElement("script")
+      script.src = "https://checkout.razorpay.com/v1/checkout.js"
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
   }
 
   const handlePlaceOrder = async () => {
@@ -172,11 +192,93 @@ export default function CheckoutPage() {
         throw new Error(result.error || "Failed to create order")
       }
 
-      // Clear cart
-      items.forEach((item) => removeItem(item.id))
+      // COD flow: behave as before
+      if (paymentMethod === "cod") {
+        // Clear cart
+        items.forEach((item) => removeItem(item.id))
 
-      // Redirect to order confirmation
-      router.push(`/order-confirmation/${result.order.orderNumber}`)
+        // Redirect to order confirmation
+        router.push(`/order-confirmation/${result.order.orderNumber}`)
+        return
+      }
+
+      // Prepaid (Razorpay) flow
+      const orderId = result.order.id as string
+
+      // 1. Create Razorpay order on backend
+      const razorpayRes = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId }),
+      })
+
+      const razorpayData = await razorpayRes.json()
+
+      if (!razorpayRes.ok || !razorpayData.razorpayOrderId) {
+        throw new Error(razorpayData.error || "Failed to initiate Razorpay payment")
+      }
+
+      // 2. Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript()
+      if (!scriptLoaded || !window.Razorpay) {
+        throw new Error("Failed to load Razorpay SDK. Please try again.")
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: razorpayData.amount,
+        currency: razorpayData.currency,
+        name: "CustomCrafts",
+        description: "Order Payment",
+        order_id: razorpayData.razorpayOrderId,
+        handler: async function (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) {
+          try {
+            const verifyRes = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                orderId,
+                ...response,
+              }),
+            })
+
+            const verifyData = await verifyRes.json()
+
+            if (!verifyRes.ok) {
+              throw new Error(verifyData.error || "Payment verification failed")
+            }
+
+            // Clear cart
+            items.forEach((item) => removeItem(item.id))
+
+            // Redirect to order confirmation
+            router.push(`/order-confirmation/${verifyData.order.orderNumber}`)
+          } catch (err: any) {
+            console.error("Error verifying payment:", err)
+            setError(err.message || "Failed to verify payment. Please contact support.")
+            setIsSubmitting(false)
+          }
+        },
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: customerEmail,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#14b8a6",
+        },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
     } catch (err: any) {
       console.error("Error placing order:", err)
       setError(err.message || "Failed to place order. Please try again.")
@@ -469,10 +571,10 @@ export default function CheckoutPage() {
           </p>
 
           <div className="space-y-3">
-            {/* PhonePe Option */}
+            {/* Razorpay Option */}
             <div
               className={`border-2 rounded-lg p-4 transition-all ${
-                paymentMethod === "phonepe"
+                paymentMethod === "razorpay"
                   ? "border-teal-500 bg-teal-50/50"
                   : "border-border bg-background"
               }`}
@@ -481,17 +583,17 @@ export default function CheckoutPage() {
                 <input
                   type="radio"
                   name="payment"
-                  value="phonepe"
-                  checked={paymentMethod === "phonepe"}
+                  value="razorpay"
+                  checked={paymentMethod === "razorpay"}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="mt-1 w-4 h-4 text-teal-600 border-2 border-gray-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
                   style={{
-                    accentColor: paymentMethod === "phonepe" ? "#14b8a6" : undefined,
+                    accentColor: paymentMethod === "razorpay" ? "#14b8a6" : undefined,
                   }}
                 />
                 <div className="flex-1">
                   <div className="font-semibold text-base mb-3">
-                    PhonePe Payment Gateway (UPI, Cards & NetBanking)
+                    Razorpay (UPI, Cards & NetBanking)
                   </div>
                   <div className="flex items-center gap-2.5 mb-3">
                     <span className="text-xs font-bold text-teal-700">UPI</span>
@@ -505,10 +607,9 @@ export default function CheckoutPage() {
                       +4
                     </span>
                   </div>
-                  {paymentMethod === "phonepe" && (
+                  {paymentMethod === "razorpay" && (
                     <p className="text-sm text-muted-foreground">
-                      You&apos;ll be redirected to PhonePe Payment Gateway (UPI,
-                      Cards & NetBanking) to complete your purchase.
+                      You&apos;ll be redirected to Razorpay to complete your payment.
                     </p>
                   )}
                 </div>
