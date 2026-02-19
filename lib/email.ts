@@ -48,9 +48,9 @@ async function sendEmailWithRetry(
       // Create email promise with error handling
       const emailPromise = api.sendTransacEmail(email).catch((err: unknown) => {
         // Log the error for debugging
-        const errorDetails = err as { code?: string; message?: string; response?: unknown }
+        const errorDetails = err as { code?: string; message?: string; response?: unknown; cause?: { code?: string } }
         console.error(`📧 Brevo API call error:`, {
-          code: errorDetails?.code,
+          code: errorDetails?.code || errorDetails?.cause?.code,
           message: errorDetails?.message,
           hasResponse: !!errorDetails?.response
         })
@@ -62,23 +62,32 @@ async function sendEmailWithRetry(
       return result as { response: unknown; body: unknown }
     } catch (error: unknown) {
       const errorObj = error as { code?: string; message?: string; cause?: { code?: string } }
-      const isTimeout = 
-        errorObj?.code === "ETIMEDOUT" || 
-        errorObj?.cause?.code === "ETIMEDOUT" ||
-        errorObj?.message?.includes("timeout") ||
-        errorObj?.message === "Request timeout after 60 seconds"
+      const errorCode = errorObj?.code || errorObj?.cause?.code
+      const errorMessage = errorObj?.message || ""
       
-      console.error(`❌ Attempt ${attempt} failed:`, errorObj?.message || errorObj?.code || errorObj?.cause?.code)
+      // Check for retryable errors (network/connection issues)
+      const isRetryableError = 
+        errorCode === "ETIMEDOUT" ||
+        errorCode === "ECONNRESET" ||
+        errorCode === "ECONNREFUSED" ||
+        errorCode === "ENOTFOUND" ||
+        errorMessage.includes("timeout") ||
+        errorMessage.includes("socket hang up") ||
+        errorMessage.includes("ECONNRESET") ||
+        errorMessage === "Request timeout after 60 seconds"
       
-      if (isTimeout && attempt < maxRetries) {
+      console.error(`❌ Attempt ${attempt} failed:`, errorMessage || errorCode)
+      console.error(`📧 Error code:`, errorCode)
+      
+      if (isRetryableError && attempt < maxRetries) {
         const waitTime = attempt * 3000 // Exponential backoff: 3s, 6s, 9s
-        console.log(`⏳ Timeout detected. Retrying in ${waitTime}ms...`)
+        console.log(`⏳ Retryable error detected (${errorCode}). Retrying in ${waitTime}ms...`)
         await new Promise((resolve) => setTimeout(resolve, waitTime))
         continue
       }
       
-      // If not a timeout or last attempt, throw immediately
-      if (!isTimeout || attempt === maxRetries) {
+      // If not retryable or last attempt, throw immediately
+      if (!isRetryableError || attempt === maxRetries) {
         throw error
       }
     }

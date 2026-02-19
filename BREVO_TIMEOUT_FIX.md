@@ -1,10 +1,19 @@
 # 🔧 Fixing Brevo API Timeout Issues
 
-## 🚨 Problem
-Brevo API calls are timing out with `ETIMEDOUT` error. This happens when:
-- Network connection is slow
+## 🚨 Problems
+Brevo API calls can fail with various network errors:
+
+1. **`ETIMEDOUT`** - Request timeout (connection too slow)
+2. **`ECONNRESET`** - Socket hang up (connection dropped)
+3. **`ECONNREFUSED`** - Connection refused (server unavailable)
+4. **`ENOTFOUND`** - DNS resolution failed
+
+These happen when:
+- Network connection is slow or unstable
 - Brevo API is experiencing high load
 - Email payload is large (with images)
+- Serverless function timeouts
+- Network infrastructure issues
 
 ## ✅ Solutions Applied
 
@@ -14,7 +23,12 @@ Brevo API calls are timing out with `ETIMEDOUT` error. This happens when:
 
 ### 2. **Better Retry Logic**
 - Exponential backoff: 3s, 6s, 9s between retries
-- Better error detection for timeout errors
+- Retries on all network errors:
+  - `ETIMEDOUT` - Timeout errors
+  - `ECONNRESET` - Socket hang up errors
+  - `ECONNREFUSED` - Connection refused
+  - `ENOTFOUND` - DNS errors
+  - Any error message containing "timeout" or "socket hang up"
 
 ### 3. **Non-Blocking Email Sending**
 - Emails are sent in background (fire-and-forget)

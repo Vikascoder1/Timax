@@ -60,6 +60,7 @@ export default function CheckoutPage() {
   const [showDiscountInput, setShowDiscountInput] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   // Form state
   const [formData, setFormData] = useState({
@@ -82,12 +83,43 @@ export default function CheckoutPage() {
   const total = getTotal()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  // Populate email from user if logged in
+  // Populate email from user if logged in and load saved address
   useEffect(() => {
     if (user?.email && !formData.email) {
       setFormData((prev) => ({ ...prev, email: user.email || "" }))
     }
-  }, [user?.email])
+    // Load saved address if user is logged in
+    if (user) {
+      loadSavedAddress()
+    }
+  }, [user])
+
+  const loadSavedAddress = async () => {
+    if (!user) return
+    try {
+      const response = await fetch("/api/user/address")
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.address) {
+          const addr = data.address
+          setFormData((prev) => ({
+            ...prev,
+            firstName: addr.saved_first_name || prev.firstName,
+            lastName: addr.saved_last_name || prev.lastName,
+            address: addr.saved_address || prev.address,
+            apartment: addr.saved_apartment || prev.apartment,
+            city: addr.saved_city || prev.city,
+            state: addr.saved_state || prev.state,
+            pinCode: addr.saved_pincode || prev.pinCode,
+            phone: addr.saved_phone || addr.phone || prev.phone,
+            country: addr.saved_country || prev.country,
+          }))
+        }
+      }
+    } catch (err) {
+      console.error("Error loading saved address:", err)
+    }
+  }
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -107,48 +139,110 @@ export default function CheckoutPage() {
     })
   }
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+    const customerEmail = user?.email || formData.email
+
+    // Email validation
+    if (!customerEmail) {
+      errors.email = "Please enter your email address"
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      errors.email = "Please enter a valid email address"
+    }
+
+    // First name validation
+    if (!formData.firstName.trim()) {
+      errors.firstName = "Please enter your first name"
+    }
+
+    // Last name validation
+    if (!formData.lastName.trim()) {
+      errors.lastName = "Please enter your last name"
+    }
+
+    // Address validation
+    if (!formData.address.trim()) {
+      errors.address = "Please enter your address"
+    }
+
+    // City validation
+    if (!formData.city.trim()) {
+      errors.city = "Please enter your city"
+    }
+
+    // State validation
+    if (!formData.state || formData.state === "") {
+      errors.state = "Please select your state"
+    }
+
+    // PIN code validation
+    if (!formData.pinCode.trim()) {
+      errors.pinCode = "Please enter your PIN code"
+    } else if (!/^\d{6}$/.test(formData.pinCode.trim())) {
+      errors.pinCode = "Please enter a valid 6-digit PIN code"
+    }
+
+    // Phone validation
+    if (!formData.phone.trim()) {
+      errors.phone = "Please enter your phone number"
+    } else if (!/^[6-9]\d{9}$/.test(formData.phone.trim().replace(/\D/g, ""))) {
+      errors.phone = "Please enter a valid 10-digit phone number"
+    }
+
+    // Cart validation
+    if (items.length === 0) {
+      errors.cart = "Your cart is empty"
+    }
+
+    setFieldErrors(errors)
+    
+    if (Object.keys(errors).length > 0) {
+      setError("Please fill in all required fields correctly")
+      return false
+    }
+
+    return true
+  }
+
   const handlePlaceOrder = async () => {
     setError(null)
+    setFieldErrors({})
+    
+    // Validate form
+    if (!validateForm()) {
+      setIsSubmitting(false)
+      return
+    }
+
     setIsSubmitting(true)
 
     // Get email from user or form
     const customerEmail = user?.email || formData.email
 
-    // Validate form with specific error messages
-    if (!customerEmail) {
-      setError("Please enter your email address")
-      setIsSubmitting(false)
-      return
-    }
-
-    if (!formData.firstName) {
-      setError("Please enter your first name")
-      setIsSubmitting(false)
-      return
-    }
-
-    if (!formData.lastName) {
-      setError("Please enter your last name")
-      setIsSubmitting(false)
-      return
-    }
-
-    if (!formData.address || !formData.city || !formData.state || !formData.pinCode) {
-      setError("Please fill in complete shipping address")
-      setIsSubmitting(false)
-      return
-    }
-
-    if (!formData.phone) {
-      setError("Please enter your phone number")
-      setIsSubmitting(false)
-      return
-    }
-
-    if (items.length === 0) {
-      setError("Your cart is empty")
-      setIsSubmitting(false)
-      return
+    // Save address if checkbox is checked and user is logged in
+    if (formData.saveAddress && user) {
+      try {
+        await fetch("/api/user/address", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            address: formData.address,
+            apartment: formData.apartment,
+            city: formData.city,
+            state: formData.state,
+            pinCode: formData.pinCode,
+            phone: formData.phone,
+            country: formData.country,
+          }),
+        })
+      } catch (err) {
+        console.error("Error saving address:", err)
+        // Don't block order if address save fails
+      }
     }
 
     try {
@@ -388,14 +482,30 @@ export default function CheckoutPage() {
               </span>
             )}
           </div>
-          <input
-            type="text"
-            placeholder="Email or mobile phone number"
-            value={user?.email || formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            disabled={!!user}
-            className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted disabled:cursor-not-allowed"
-          />
+          <div>
+            <input
+              type="text"
+              placeholder="Email or mobile phone number"
+              value={user?.email || formData.email}
+              onChange={(e) => {
+                handleInputChange("email", e.target.value)
+                if (fieldErrors.email) {
+                  setFieldErrors((prev) => {
+                    const newErrors = { ...prev }
+                    delete newErrors.email
+                    return newErrors
+                  })
+                }
+              }}
+              disabled={!!user}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted disabled:cursor-not-allowed ${
+                fieldErrors.email ? "border-destructive focus:ring-destructive" : "border-border"
+              }`}
+            />
+            {fieldErrors.email && (
+              <p className="text-sm text-destructive mt-1">{fieldErrors.email}</p>
+            )}
+          </div>
           <div className="mt-3 flex items-center gap-2">
             <input
               type="checkbox"
@@ -438,18 +548,46 @@ export default function CheckoutPage() {
                 type="text"
                 placeholder="First name"
                 value={formData.firstName}
-                onChange={(e) => handleInputChange("firstName", e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                onChange={(e) => {
+                  handleInputChange("firstName", e.target.value)
+                  if (fieldErrors.firstName) {
+                    setFieldErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.firstName
+                      return newErrors
+                    })
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring ${
+                  fieldErrors.firstName ? "border-destructive focus:ring-destructive" : "border-border"
+                }`}
               />
+              {fieldErrors.firstName && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.firstName}</p>
+              )}
             </div>
             <div>
               <input
                 type="text"
                 placeholder="Last name"
                 value={formData.lastName}
-                onChange={(e) => handleInputChange("lastName", e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                onChange={(e) => {
+                  handleInputChange("lastName", e.target.value)
+                  if (fieldErrors.lastName) {
+                    setFieldErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.lastName
+                      return newErrors
+                    })
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring ${
+                  fieldErrors.lastName ? "border-destructive focus:ring-destructive" : "border-border"
+                }`}
               />
+              {fieldErrors.lastName && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.lastName}</p>
+              )}
             </div>
           </div>
 
@@ -460,11 +598,25 @@ export default function CheckoutPage() {
                 type="text"
                 placeholder="Address"
                 value={formData.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring pr-10"
+                onChange={(e) => {
+                  handleInputChange("address", e.target.value)
+                  if (fieldErrors.address) {
+                    setFieldErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.address
+                      return newErrors
+                    })
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring pr-10 ${
+                  fieldErrors.address ? "border-destructive focus:ring-destructive" : "border-border"
+                }`}
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
+            {fieldErrors.address && (
+              <p className="text-sm text-destructive mt-1">{fieldErrors.address}</p>
+            )}
           </div>
 
           {/* Apartment */}
@@ -485,16 +637,41 @@ export default function CheckoutPage() {
                 type="text"
                 placeholder="City"
                 value={formData.city}
-                onChange={(e) => handleInputChange("city", e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                onChange={(e) => {
+                  handleInputChange("city", e.target.value)
+                  if (fieldErrors.city) {
+                    setFieldErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.city
+                      return newErrors
+                    })
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring ${
+                  fieldErrors.city ? "border-destructive focus:ring-destructive" : "border-border"
+                }`}
               />
+              {fieldErrors.city && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.city}</p>
+              )}
             </div>
             <div>
               <div className="relative">
                 <select
                   value={formData.state}
-                  onChange={(e) => handleInputChange("state", e.target.value)}
-                  className="w-full px-4 py-3 border border-border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-ring bg-background font-semibold"
+                  onChange={(e) => {
+                    handleInputChange("state", e.target.value)
+                    if (fieldErrors.state) {
+                      setFieldErrors((prev) => {
+                        const newErrors = { ...prev }
+                        delete newErrors.state
+                        return newErrors
+                      })
+                    }
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-ring bg-background font-semibold ${
+                    fieldErrors.state ? "border-destructive focus:ring-destructive" : "border-border"
+                  }`}
                 >
                   {indianStates.map((state) => (
                     <option key={state} value={state}>
@@ -504,15 +681,33 @@ export default function CheckoutPage() {
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               </div>
+              {fieldErrors.state && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.state}</p>
+              )}
             </div>
             <div>
               <input
                 type="text"
                 placeholder="PIN code"
                 value={formData.pinCode}
-                onChange={(e) => handleInputChange("pinCode", e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                onChange={(e) => {
+                  handleInputChange("pinCode", e.target.value.replace(/\D/g, "").slice(0, 6))
+                  if (fieldErrors.pinCode) {
+                    setFieldErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.pinCode
+                      return newErrors
+                    })
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring ${
+                  fieldErrors.pinCode ? "border-destructive focus:ring-destructive" : "border-border"
+                }`}
+                maxLength={6}
               />
+              {fieldErrors.pinCode && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.pinCode}</p>
+              )}
             </div>
           </div>
 
@@ -523,8 +718,20 @@ export default function CheckoutPage() {
                 type="tel"
                 placeholder="Phone"
                 value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring pr-10"
+                onChange={(e) => {
+                  handleInputChange("phone", e.target.value.replace(/\D/g, "").slice(0, 10))
+                  if (fieldErrors.phone) {
+                    setFieldErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.phone
+                      return newErrors
+                    })
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring pr-10 ${
+                  fieldErrors.phone ? "border-destructive focus:ring-destructive" : "border-border"
+                }`}
+                maxLength={10}
               />
               <button
                 type="button"
@@ -534,6 +741,9 @@ export default function CheckoutPage() {
                 ?
               </button>
             </div>
+            {fieldErrors.phone && (
+              <p className="text-sm text-destructive mt-1">{fieldErrors.phone}</p>
+            )}
           </div>
 
           {/* Checkboxes */}
