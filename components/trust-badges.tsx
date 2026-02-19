@@ -5,7 +5,7 @@ import { Shield, Battery, HandCoins, MapPin } from "lucide-react"
 const badges = [
   {
     icon: Shield,
-    label: "BUY WITH CUSTOMCRAFT TRUST",
+    label: "BUY WITH MS CRAFTS TRUST",
   },
   {
     icon: Battery,
@@ -13,7 +13,7 @@ const badges = [
   },
   {
     icon: HandCoins,
-    label: "EARN CUSTOMCRAFT POINTS",
+    label: "EARN MS CRAFTS POINTS",
   },
   {
     icon: MapPin,

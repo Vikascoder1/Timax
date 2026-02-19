@@ -230,7 +230,7 @@ export default function CheckoutPage() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: razorpayData.amount,
         currency: razorpayData.currency,
-        name: "CustomCrafts",
+        name: "MS HandCraft",
         description: "Order Payment",
         order_id: razorpayData.razorpayOrderId,
         handler: async function (response: {
@@ -305,7 +305,7 @@ export default function CheckoutPage() {
       <header className="border-b border-border px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="text-lg tracking-wide">
-            <span className="font-light text-foreground">CUSTOM</span>
+            <span className="font-light text-foreground">MS</span>
             <span className="font-bold text-teal-500">CRAFTS</span>
           </Link>
           <button aria-label="Cart" className="p-1">

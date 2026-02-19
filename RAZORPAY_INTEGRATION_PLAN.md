@@ -115,7 +115,7 @@ const options = {
   key: RAZORPAY_KEY_ID,
   amount: order.amount,
   currency: 'INR',
-  name: 'CustomCrafts',
+  name: 'MS HandCraft',
   description: 'Order Payment',
   order_id: order.id,
   handler: function (response) {
@@ -255,6 +255,8 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_signature VARCHAR(500);
 ---
 
 **Ready to implement after COD flow is complete!** 🚀
+
+
 
 
 

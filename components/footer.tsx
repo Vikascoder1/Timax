@@ -30,7 +30,7 @@ export function Footer() {
       <div className="bg-[#1a1a1a] px-4 py-8 border-t border-[#3d3d3d]">
         <div className="text-center">
           <a href="/" className="text-2xl tracking-wider">
-            <span className="font-light text-[#e0e0e0]">CUSTOM</span>
+            <span className="font-light text-[#e0e0e0]">MS</span>
             <span className="font-bold text-[#2abfbf]">CRAFTS</span>
           </a>
         </div>

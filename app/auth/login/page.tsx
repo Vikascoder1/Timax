@@ -40,7 +40,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-4">
             <span className="text-2xl tracking-wide">
-              <span className="font-light text-foreground">CUSTOM</span>
+              <span className="font-light text-foreground">MS</span>
               <span className="font-bold text-teal-500">CRAFTS</span>
             </span>
           </Link>

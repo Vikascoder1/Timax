@@ -9,7 +9,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "CustomCrafts - Luxury Wall Clocks",
+  title: "MS HandCraft - Luxury Wall Clocks",
   description:
     "Discover handcrafted luxury wall clocks with silent movement. Shop unique geode, marble, and designer clocks for every occasion.",
 }

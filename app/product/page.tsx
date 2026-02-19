@@ -311,7 +311,7 @@ function ProductPageContent() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 pb-8 border-b border-border">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Brand</p>
-              <p className="font-semibold">Custom Craft</p>
+              <p className="font-semibold">MS HandCraft</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Colour</p>
@@ -376,7 +376,7 @@ function ProductPageContent() {
                 </div>
                 <div className="p-4">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                    CustomCraft
+                    MS CRAFTS
                   </p>
                   <h3 className="font-semibold text-sm mb-2 line-clamp-2">
                     {relatedProduct.name.length > 40
