@@ -9,15 +9,39 @@ import { Sidebar } from "@/components/sidebar"
 import { RatingBadge } from "@/components/rating-badge"
 import { WhatsappButton } from "@/components/whatsapp-button"
 import { Footer } from "@/components/footer"
-import { User, LogOut, Package, MapPin } from "lucide-react"
+import { User, Package, Calendar, CreditCard, CheckCircle, Clock, XCircle } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
+
+interface OrderItem {
+  id: string
+  product_name: string
+  product_image: string
+  size: string
+  quantity: number
+  unit_price: number
+  total_price: number
+}
+
+interface Order {
+  id: string
+  order_number: string
+  status: string
+  payment_method: string
+  payment_status: string
+  total_amount: number
+  created_at: string
+  items: OrderItem[]
+}
 
 export default function AccountPage() {
   const { user, loading: authLoading, signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<{ full_name?: string; phone?: string } | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [ordersLoading, setOrdersLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
@@ -28,7 +52,9 @@ export default function AccountPage() {
 
     if (user) {
       loadProfile()
+      loadOrders()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, router])
 
   const loadProfile = async () => {
@@ -52,6 +78,71 @@ export default function AccountPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadOrders = async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch("/api/orders/my-orders")
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders")
+      }
+      const result = await response.json()
+      if (result.success) {
+        setOrders(result.orders || [])
+      }
+    } catch (err) {
+      console.error("Error loading orders:", err)
+    } finally {
+      setOrdersLoading(false)
+    }
+  }
+
+  const getStatusBadge = (status: string, paymentStatus: string) => {
+    if (status === "confirmed" && paymentStatus === "completed") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          <CheckCircle className="h-3 w-3" />
+          Confirmed
+        </span>
+      )
+    }
+    if (status === "pending_payment") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+          <Clock className="h-3 w-3" />
+          Pending Payment
+        </span>
+      )
+    }
+    if (status === "cancelled") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <XCircle className="h-3 w-3" />
+          Cancelled
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+        <Clock className="h-3 w-3" />
+        {status}
+      </span>
+    )
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  const formatPaymentMethod = (method: string) => {
+    return method === "cod" ? "Cash on Delivery" : "Razorpay"
   }
 
   const handleLogout = async () => {
@@ -104,10 +195,121 @@ export default function AccountPage() {
         {/* Order History */}
         <div className="mb-8 pb-8 border-b border-border">
           <h2 className="text-xl font-semibold mb-4">Order history</h2>
-          <div className="bg-muted rounded-lg p-8 text-center">
-            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">You haven&apos;t placed any orders yet.</p>
-          </div>
+          
+          {(() => {
+            if (ordersLoading) {
+              return (
+                <div className="bg-muted rounded-lg p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading orders...</p>
+                </div>
+              )
+            }
+            if (orders.length === 0) {
+              return (
+                <div className="bg-muted rounded-lg p-8 text-center">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-muted-foreground">You haven&apos;t placed any orders yet.</p>
+                  <Link
+                    href="/"
+                    className="inline-block mt-4 text-sm text-primary hover:underline"
+                  >
+                    Start shopping →
+                  </Link>
+                </div>
+              )
+            }
+            return (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="border border-border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  {/* Order Header */}
+                  <div className="bg-muted p-4 border-b border-border">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-lg">Order {order.order_number}</h3>
+                          {getStatusBadge(order.status, order.payment_status)}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {formatDate(order.created_at)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CreditCard className="h-4 w-4" />
+                            {formatPaymentMethod(order.payment_method)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-semibold">
+                          ₹{Number(order.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <Link
+                          href={`/order-confirmation/${order.order_number}`}
+                          className="text-sm text-primary hover:underline mt-1 inline-block"
+                        >
+                          View details →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      {order.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-4 pb-3 border-b border-border last:border-0 last:pb-0"
+                        >
+                          <div className="relative w-16 h-16 shrink-0 bg-muted rounded-lg overflow-hidden">
+                            {item.product_image ? (
+                              <Image
+                                src={(() => {
+                                  if (item.product_image.startsWith("http")) {
+                                    return item.product_image
+                                  }
+                                  if (item.product_image.startsWith("/images/")) {
+                                    return item.product_image
+                                  }
+                                  return `/images/${item.product_image}`
+                                })()}
+                                alt={item.product_name}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{item.product_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Size: {item.size} × Qty: {item.quantity}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-sm">
+                              ₹{Number(item.total_price).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            )
+          })()}
         </div>
 
         {/* Account Details */}
@@ -117,18 +319,18 @@ export default function AccountPage() {
           <div className="space-y-4">
             {/* Email */}
             <div className="border border-border rounded-lg p-4">
-              <label className="text-sm font-medium text-muted-foreground mb-1 block">
+              <div className="text-sm font-medium text-muted-foreground mb-1">
                 Email
-              </label>
+              </div>
               <p className="text-foreground">{user.email}</p>
             </div>
 
             {/* Full Name */}
             {profile?.full_name && (
               <div className="border border-border rounded-lg p-4">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">
+                <div className="text-sm font-medium text-muted-foreground mb-1">
                   Full Name
-                </label>
+                </div>
                 <p className="text-foreground">{profile.full_name}</p>
               </div>
             )}
@@ -136,9 +338,9 @@ export default function AccountPage() {
             {/* Phone */}
             {profile?.phone && (
               <div className="border border-border rounded-lg p-4">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">
+                <div className="text-sm font-medium text-muted-foreground mb-1">
                   Phone
-                </label>
+                </div>
                 <p className="text-foreground">{profile.phone}</p>
               </div>
             )}

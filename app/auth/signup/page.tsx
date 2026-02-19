@@ -46,6 +46,23 @@ export default function SignupPage() {
       }
       setLoading(false)
     } else {
+      // Send welcome email (don't block on email failure)
+      try {
+        await fetch("/api/auth/send-welcome-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            customerName: fullName || email.split("@")[0],
+            customerEmail: email,
+          }),
+        })
+      } catch (emailError) {
+        // Email failure shouldn't block signup
+        console.error("Failed to send welcome email:", emailError)
+      }
+
       setSuccess(true)
       // Redirect to login page after a brief delay
       setTimeout(() => {

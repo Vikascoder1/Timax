@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { sendOrderConfirmationEmail } from "@/lib/email"
+import { convertToStorageUrl } from "@/lib/supabase-storage"
 
 type OrderItem = {
   order_id: string
@@ -14,9 +15,22 @@ type OrderItem = {
 }
 
 export async function POST(request: NextRequest) {
+  // Log immediately - even before try/catch - use process.stdout for guaranteed output
+  const logMessage = `🛒🛒🛒 ORDER API ROUTE HIT - STARTING 🛒🛒🛒 ${new Date().toISOString()}`
+  console.log(logMessage)
+  process.stdout.write(logMessage + "\n")
+  
   try {
     const supabase = await createClient()
     const body = await request.json()
+    
+    const bodyLog = {
+      paymentMethod: body.paymentMethod,
+      customerEmail: body.customerEmail,
+      itemsCount: body.items?.length,
+    }
+    console.log("📦 Request body received:", bodyLog)
+    process.stdout.write(`📦 Request body: ${JSON.stringify(bodyLog)}\n`)
 
     // Validate required fields
     const {
@@ -37,6 +51,8 @@ export async function POST(request: NextRequest) {
       specialInstructions,
       userId,
     } = body
+    
+    console.log("✅ Payment method:", paymentMethod)
 
     // Validation
     if (
@@ -110,7 +126,7 @@ export async function POST(request: NextRequest) {
       order_id: order.id,
       product_id: item.productId,
       product_name: item.name,
-      product_image: item.image,
+      product_image: item.image || "",
       size: item.size,
       quantity: item.quantity,
       unit_price: item.price,
@@ -133,6 +149,12 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email (only for COD, prepaid will send after payment)
     if (paymentMethod === "cod") {
+      // Get full order with items for email
+      const { data: orderItemsData } = await supabase
+        .from("order_items")
+        .select("*")
+        .eq("order_id", order.id)
+
       const emailData = {
         orderNumber: order.order_number,
         customerName: order.customer_name,
@@ -142,13 +164,18 @@ export async function POST(request: NextRequest) {
           month: "long",
           day: "numeric",
         }),
-        items: orderItems.map((item: OrderItem) => ({
-          name: item.product_name,
-          size: item.size,
-          quantity: item.quantity,
-          unitPrice: Number(item.unit_price),
-          totalPrice: Number(item.total_price),
-        })),
+        items: await Promise.all(
+          (orderItemsData || []).map(async (item: OrderItem) => ({
+            name: item.product_name,
+            image: item.product_image
+              ? await convertToStorageUrl(item.product_image)
+              : undefined,
+            size: item.size,
+            quantity: item.quantity,
+            unitPrice: Number(item.unit_price),
+            totalPrice: Number(item.total_price),
+          }))
+        ),
         subtotal: Number(order.subtotal),
         tax: Number(order.tax),
         shippingCost: Number(order.shipping_cost),
@@ -163,10 +190,21 @@ export async function POST(request: NextRequest) {
         },
       }
 
-      // Send email (don't fail if email fails)
-      await sendOrderConfirmationEmail(emailData)
+      // Send email - DO NOT AWAIT, send in background
+      sendOrderConfirmationEmail(emailData).then((result) => {
+        if (result.success) {
+          console.log("✅ Order confirmation email sent to:", emailData.customerEmail)
+        } else {
+          console.error("❌ Failed to send order email:", result.error)
+        }
+      }).catch((err) => {
+        console.error("❌ Email error:", err)
+      })
     }
 
+    console.log("✅ Order created successfully. Order number:", order.order_number)
+    console.log("🛒 ===== ORDER CREATION COMPLETE =====")
+    
     return NextResponse.json(
       {
         success: true,
@@ -179,12 +217,15 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error: any) {
-    console.error("Error in create order API:", error)
+  } catch (error: unknown) {
+    console.error("❌❌❌ ERROR IN ORDER CREATION API ❌❌❌")
+    console.error("Error:", error)
+    console.error("Error type:", typeof error)
+    console.error("Error message:", (error as { message?: string })?.message)
+    const errorMessage = (error as { message?: string })?.message || "Internal server error"
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: "Internal server error", details: errorMessage },
       { status: 500 }
     )
   }
 }
-

@@ -178,6 +178,14 @@ export default function CheckoutPage() {
         userId: user?.id || null,
       }
 
+      console.log("🛒 CLIENT: About to call /api/orders/create")
+      console.log("🛒 CLIENT: Payment method:", paymentMethod)
+      console.log("🛒 CLIENT: Order data:", {
+        paymentMethod: orderData.paymentMethod,
+        customerEmail: orderData.customerEmail,
+        itemsCount: orderData.items.length,
+      })
+
       const response = await fetch("/api/orders/create", {
         method: "POST",
         headers: {
@@ -186,7 +194,9 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderData),
       })
 
+      console.log("🛒 CLIENT: Response status:", response.status)
       const result = await response.json()
+      console.log("🛒 CLIENT: Response result:", result)
 
       if (!response.ok) {
         throw new Error(result.error || "Failed to create order")
@@ -785,7 +795,7 @@ export default function CheckoutPage() {
             <Link href="#" className="hover:underline">
               Terms of service
             </Link>
-            <Link href="#" className="hover:underline">
+            <Link href="/contact" className="hover:underline">
               Contact
             </Link>
           </div>
