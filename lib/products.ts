@@ -18,9 +18,9 @@ export const products: Record<string, Product> = {
     alt: "Shiny Ocean With Gold Bezel Resin Wall Clock",
     rating: 4.5,
     reviewCount: 27,
-    originalPrice: 5198,
-    salePrice: 2599,
-    discount: "50% OFF",
+    originalPrice: 20,
+    salePrice: 20,
+    discount: "TEST",
     images: [
       "/images/ocean.jpeg",
       "/images/ocean2.jpeg",

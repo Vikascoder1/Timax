@@ -23,7 +23,7 @@ export function AboutSection() {
         About Us
       </h2>
       <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-        At Custom Craft, we believe that every resin creation is a work of art,
+        At MS HandCraft, we believe that every resin creation is a work of art,
         meticulously crafted to reflect your individual style and preferences.
       </p>
 

@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <div className="flex-1 flex justify-center">
             <a href="/" className="text-lg tracking-wide">
-              <span className="font-light">CUSTOM</span>
+              <span className="font-light">MS</span>
               <span className="font-bold">CRAFTS</span>
             </a>
           </div>

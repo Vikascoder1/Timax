@@ -54,7 +54,7 @@
 3. Add to `.env.local`:
    ```env
    RESEND_API_KEY=re_your_api_key_here
-   RESEND_FROM_EMAIL=CustomCrafts <noreply@yourdomain.com>
+   RESEND_FROM_EMAIL=MS HandCraft <noreply@yourdomain.com>
    ```
    Note: For free tier, use `onboarding@resend.dev` as from email initially
 
@@ -183,6 +183,7 @@ Redirects to order confirmation page
 ---
 
 **COD flow is ready! Test it and let me know if you need any adjustments.** 🚀
+
 
 
 

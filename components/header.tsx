@@ -35,7 +35,7 @@ export function Header({ isSidebarOpen, onToggleSidebar }: HeaderProps) {
 
         <div className="flex-1 flex justify-center">
           <Link href="/" className="text-lg tracking-wide">
-            <span className="font-light">CUSTOM</span>
+            <span className="font-light">MS</span>
             <span className="font-bold text-teal-500">CRAFTS</span>
           </Link>
         </div>

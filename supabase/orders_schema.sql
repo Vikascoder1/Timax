@@ -1,4 +1,4 @@
--- Orders and Order Items Tables for CustomCrafts
+-- Orders and Order Items Tables for MS HandCraft
 -- Run this in Supabase SQL Editor
 
 -- Create orders table
@@ -138,6 +138,7 @@ CREATE TRIGGER update_orders_updated_at
   BEFORE UPDATE ON orders
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
 
 
 

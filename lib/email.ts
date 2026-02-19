@@ -36,7 +36,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
 
   try {
     const { data: emailData, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "CustomCrafts <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM_EMAIL || "MS HandCraft <onboarding@resend.dev>",
       to: data.customerEmail,
       subject: `Order Confirmation - ${data.orderNumber}`,
       html: generateOrderEmailHTML(data),
@@ -70,7 +70,7 @@ function generateOrderEmailHTML(data: OrderEmailData): string {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background-color: #14b8a6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="margin: 0;">CustomCrafts</h1>
+    <h1 style="margin: 0;">MS HandCraft</h1>
     <p style="margin: 10px 0 0 0;">Order Confirmation</p>
   </div>
   
@@ -144,17 +144,18 @@ function generateOrderEmailHTML(data: OrderEmailData): string {
     </div>
     
     <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">
-      If you have any questions, please contact us at support@customcrafts.com
+      If you have any questions, please contact us at support@MS HandCraft.com
     </p>
     
     <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
-      Thank you for choosing CustomCrafts!
+      Thank you for choosing MS HandCraft!
     </p>
   </div>
 </body>
 </html>
   `
 }
+
 
 
 
