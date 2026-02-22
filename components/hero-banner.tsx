@@ -41,7 +41,7 @@ export function HeroBanner() {
 
   return (
     <section className="relative w-full">
-      <div className="relative w-full aspect-[4/5] overflow-hidden">
+      <div className="relative w-full aspect-[5/5] overflow-hidden">
         {slides.map((slide, index) => (
           <div
             key={index}
