@@ -792,7 +792,7 @@ export default function CheckoutPage() {
 
           <div className="space-y-3">
             {/* Razorpay Option */}
-            <div
+            {/* <div
               className={`border-2 rounded-lg p-4 transition-all ${
                 paymentMethod === "razorpay"
                   ? "border-teal-500 bg-teal-50/50"
@@ -834,7 +834,7 @@ export default function CheckoutPage() {
                   )}
                 </div>
               </label>
-            </div>
+            </div> */}
 
             {/* COD Option */}
             <div
