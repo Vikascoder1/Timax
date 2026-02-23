@@ -206,10 +206,10 @@ export async function sendSignupConfirmationEmail(data: SignupEmailData) {
   try {
     const sendSmtpEmail = new brevo.SendSmtpEmail()
     
-    sendSmtpEmail.subject = "Welcome to MS CRAFTS - Your Account is Ready! 🎉"
+    sendSmtpEmail.subject = "Welcome to MS HandCRAFT - Your Account is Ready! 🎉"
     sendSmtpEmail.htmlContent = generateSignupEmailHTML(data)
     sendSmtpEmail.sender = {
-      name: process.env.BREVO_FROM_NAME || "MS CRAFTS",
+      name: process.env.BREVO_FROM_NAME || "MS HandCraft",
       email: process.env.BREVO_FROM_EMAIL || "noreply@mscrafts.com",
     }
     sendSmtpEmail.to = [{ email: data.customerEmail, name: data.customerName }]
