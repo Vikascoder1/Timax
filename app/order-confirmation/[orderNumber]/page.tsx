@@ -191,11 +191,11 @@ export default function OrderConfirmationPage() {
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>₹{Number(order.subtotal).toLocaleString("en-IN")}.00</span>
               </div>
-              {order.discount > 0 && (
+              {(order.discount ?? 0) > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-green-600 font-semibold">Prepaid Discount (10%)</span>
                   <span className="text-green-600 font-semibold">
-                    -₹{Number(order.discount).toLocaleString("en-IN")}.00
+                    -₹{Number(order.discount ?? 0).toLocaleString("en-IN")}.00
                   </span>
                 </div>
               )}
@@ -217,9 +217,9 @@ export default function OrderConfirmationPage() {
                   ₹{Number(order.total_amount).toLocaleString("en-IN")}.00
                 </span>
               </div>
-              {order.discount > 0 && (
+              {(order.discount ?? 0) > 0 && (
                 <p className="text-xs text-green-600 font-semibold mt-2">
-                  💰 You saved ₹{Number(order.discount).toLocaleString("en-IN")}.00 with prepaid payment!
+                  💰 You saved ₹{Number(order.discount ?? 0).toLocaleString("en-IN")}.00 with prepaid payment!
                 </p>
               )}
             </div>
