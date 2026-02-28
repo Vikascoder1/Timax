@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { getSupabaseClient } from "@/lib/supabase/client"
 import { CheckCircle, Package, MapPin, Phone, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -21,6 +21,7 @@ interface Order {
   shipping_pincode: string
   shipping_country: string
   subtotal: number
+  discount?: number
   tax: number
   shipping_cost: number
   total_amount: number
@@ -54,7 +55,7 @@ export default function OrderConfirmationPage() {
 
   const loadOrder = async () => {
     try {
-      const supabase = createClient()
+      const supabase = getSupabaseClient()
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select("*")
@@ -190,6 +191,14 @@ export default function OrderConfirmationPage() {
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>₹{Number(order.subtotal).toLocaleString("en-IN")}.00</span>
               </div>
+              {order.discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-green-600 font-semibold">Prepaid Discount (10%)</span>
+                  <span className="text-green-600 font-semibold">
+                    -₹{Number(order.discount).toLocaleString("en-IN")}.00
+                  </span>
+                </div>
+              )}
               {order.tax > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax</span>
@@ -208,6 +217,11 @@ export default function OrderConfirmationPage() {
                   ₹{Number(order.total_amount).toLocaleString("en-IN")}.00
                 </span>
               </div>
+              {order.discount > 0 && (
+                <p className="text-xs text-green-600 font-semibold mt-2">
+                  💰 You saved ₹{Number(order.discount).toLocaleString("en-IN")}.00 with prepaid payment!
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -281,6 +295,7 @@ export default function OrderConfirmationPage() {
     </div>
   )
 }
+
 
 
 

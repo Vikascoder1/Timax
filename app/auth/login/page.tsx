@@ -22,14 +22,28 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const { error } = await signIn(email, password)
+    try {
+      const { error } = await signIn(email, password)
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        if (error.message?.includes("timeout")) {
+          setError(
+            "Connection timeout. Please check your internet connection and try again. If the problem persists, your Supabase instance might be experiencing issues."
+          )
+        } else {
+          setError(error.message || "Invalid email or password")
+        }
+        setLoading(false)
+      } else {
+        setLoading(false)
+        router.push("/")
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      // Catch any unexpected errors
+      console.error("Unexpected login error:", err)
+      setError("An unexpected error occurred. Please try again.")
       setLoading(false)
-    } else {
-      router.push("/")
-      router.refresh()
     }
   }
 

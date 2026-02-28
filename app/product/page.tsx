@@ -11,7 +11,7 @@ import { WhatsappButton } from "@/components/whatsapp-button"
 import { ReviewsSection } from "@/components/reviews-section"
 import { AboutSection } from "@/components/about-section"
 import { Footer } from "@/components/footer"
-import { getProductById, getRelatedProducts } from "@/lib/products"
+import { getProductById, getRelatedProducts, getPriceBySize } from "@/lib/products"
 import Link from "next/link"
 import { useCart } from "@/lib/cart-context"
 import { CartSheet } from "@/components/cart-sheet"
@@ -29,6 +29,10 @@ function ProductPageContent() {
 
   const product = getProductById(productId)
   const relatedProducts = product ? getRelatedProducts(productId) : []
+  
+  // Get current price based on selected size
+  const currentPrice = product ? getPriceBySize(product, selectedSize) : 0
+  const currentOriginalPrice = product ? currentPrice : 0 // For now, same as sale price
 
   // Reset image index when product changes
   useEffect(() => {
@@ -159,10 +163,10 @@ function ProductPageContent() {
             <div className="mb-6">
               <div className="flex items-baseline gap-3 mb-2">
                 <span className="text-3xl font-bold">
-                  ₹ {product.salePrice.toLocaleString("en-IN")}.00
+                  ₹ {currentPrice.toLocaleString("en-IN")}.00
                 </span>
                 <span className="line-through text-muted-foreground">
-                  ₹ {product.originalPrice.toLocaleString("en-IN")}.00
+                  ₹ {currentOriginalPrice.toLocaleString("en-IN")}.00
                 </span>
               </div>
               {product.discount && (
@@ -171,11 +175,29 @@ function ProductPageContent() {
                 </div>
               )}
               <p className="text-sm text-green-600 font-semibold">
-                You save ₹ {(product.originalPrice - product.salePrice).toLocaleString("en-IN")}.00 today.
+                You save ₹ {(currentOriginalPrice - currentPrice).toLocaleString("en-IN")}.00 today.
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 Taxes included. Shipping calculated at checkout.
               </p>
+            </div>
+
+            {/* Prepaid Discount Banner */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 border-2 border-teal-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">10%</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-teal-900 mb-1">
+                    🎉 Get 10% Extra Discount on Prepaid Orders!
+                  </p>
+                  <p className="text-xs text-teal-700 leading-relaxed">
+                    Pay online using Razorpay (UPI, Cards, NetBanking) and save an additional 10% on your order. 
+                    This discount is automatically applied at checkout when you choose prepaid payment.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Features */}
@@ -258,7 +280,7 @@ function ProductPageContent() {
                     productId: product.id,
                     name: product.name,
                     image: product.images[0],
-                    price: product.salePrice,
+                    price: currentPrice,
                     size: selectedSize,
                     quantity: quantity,
                   })
@@ -275,7 +297,7 @@ function ProductPageContent() {
                     productId: product.id,
                     name: product.name,
                     image: product.images[0],
-                    price: product.salePrice,
+                    price: currentPrice,
                     size: selectedSize,
                     quantity: quantity,
                   })

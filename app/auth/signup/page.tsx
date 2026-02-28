@@ -23,52 +23,68 @@ export default function SignupPage() {
     setError(null)
     setLoading(true)
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      setLoading(false)
-      return
-    }
+    try {
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters")
+        setLoading(false)
+        return
+      }
 
-    const { error } = await signUp(email, password, fullName)
+      const { error } = await signUp(email, password, fullName)
 
-    if (error) {
-      // Check if it's a configuration error
-      if (error.message?.includes("Supabase not configured") || error.message?.includes("Missing Supabase")) {
-        setError(
-          "Supabase is not configured. Please set up your environment variables. See SETUP_SUPABASE.md for instructions."
-        )
-      } else if (error.message?.includes("404") || error.message?.includes("Not Found")) {
-        setError(
-          "Supabase URL is not configured correctly. Please check your .env.local file and ensure NEXT_PUBLIC_SUPABASE_URL is set to your Supabase project URL."
-        )
+      if (error) {
+        // Check if it's a configuration error
+        if (error.message?.includes("Supabase not configured") || error.message?.includes("Missing Supabase")) {
+          setError(
+            "Supabase is not configured. Please set up your environment variables. See SETUP_SUPABASE.md for instructions."
+          )
+        } else if (error.message?.includes("404") || error.message?.includes("Not Found")) {
+          setError(
+            "Supabase URL is not configured correctly. Please check your .env.local file and ensure NEXT_PUBLIC_SUPABASE_URL is set to your Supabase project URL."
+          )
+        } else if (error.message?.includes("timeout") || error.message?.includes("Connection timeout")) {
+          setError(
+            "Connection timeout. Please check your internet connection and try again. If the problem persists, your Supabase instance might be experiencing issues."
+          )
+        } else if (error.message?.includes("Network error")) {
+          setError(
+            "Network error: Unable to connect to Supabase. Please check your internet connection and ensure Supabase is accessible."
+          )
+        } else if (error.message?.includes("User already registered")) {
+          setError(
+            "An account with this email already exists. Please try logging in instead."
+          )
+        } else if (error.message?.includes("Invalid email")) {
+          setError(
+            "Please enter a valid email address."
+          )
+        } else if (error.message?.includes("Password")) {
+          setError(
+            error.message || "Password requirements not met. Please check and try again."
+          )
+        } else {
+          setError(error.message || "An error occurred. Please try again.")
+        }
+        setLoading(false)
       } else {
-        setError(error.message || "An error occurred. Please try again.")
+        // Signup successful - Supabase should send confirmation email
+        // Note: If confirmation email is not received, check:
+        // 1. Supabase Dashboard → Authentication → Settings → Enable "Email confirmations"
+        // 2. Supabase Dashboard → Settings → Auth → Configure SMTP (use Brevo SMTP)
+        // 3. Check spam folder
+        setSuccess(true)
+        setLoading(false)
+        // Redirect to login page after a brief delay
+        setTimeout(() => {
+          router.push("/auth/login")
+          router.refresh()
+        }, 2000)
       }
+    } catch (err: unknown) {
+      // Catch any unexpected errors
+      console.error("Unexpected signup error:", err)
+      setError("An unexpected error occurred. Please try again.")
       setLoading(false)
-    } else {
-      // Send welcome email (don't block on email failure)
-      try {
-        await fetch("/api/auth/send-welcome-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            customerName: fullName || email.split("@")[0],
-            customerEmail: email,
-          }),
-        })
-      } catch (emailError) {
-        // Email failure shouldn't block signup
-        console.error("Failed to send welcome email:", emailError)
-      }
-
-      setSuccess(true)
-      // Redirect to login page after a brief delay
-      setTimeout(() => {
-        router.push("/auth/login")
-        router.refresh()
-      }, 2000)
     }
   }
 
@@ -97,7 +113,18 @@ export default function SignupPage() {
               Please check your email to verify your account.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Redirecting to checkout...
+              We've sent a confirmation email to <strong>{email}</strong>
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              If you don't see the email:
+            </p>
+            <ul className="text-xs text-muted-foreground mt-1 list-disc list-inside space-y-1">
+              <li>Check your spam/junk folder</li>
+              <li>Wait a few minutes for the email to arrive</li>
+              <li>Make sure email confirmation is enabled in Supabase</li>
+            </ul>
+            <p className="text-sm text-muted-foreground mt-4">
+              Redirecting to login...
             </p>
           </div>
         </div>
