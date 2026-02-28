@@ -80,8 +80,15 @@ export default function CheckoutPage() {
     textOffers: false,
   })
 
-  const total = getTotal()
+  const subtotal = getTotal()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  
+  // Calculate 10% discount for prepaid orders
+  const discountRate = 0.1 // 10%
+  const discountAmount = paymentMethod === "razorpay" 
+    ? Math.round(subtotal * discountRate) 
+    : 0
+  const total = subtotal - discountAmount
 
   // Populate email from user if logged in and load saved address
   useEffect(() => {
@@ -264,7 +271,8 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           price: item.price,
         })),
-        subtotal: total,
+        subtotal: subtotal,
+        discount: discountAmount,
         tax: 0,
         shippingCost: 0,
         totalAmount: total,
@@ -438,6 +446,11 @@ export default function CheckoutPage() {
             <span className="font-bold text-lg">
               ₹ {total.toLocaleString("en-IN")}.00
             </span>
+            {discountAmount > 0 && (
+              <span className="text-xs text-green-600 font-semibold ml-2">
+                (10% off applied)
+              </span>
+            )}
           </button>
 
           {orderSummaryOpen && (
@@ -792,7 +805,7 @@ export default function CheckoutPage() {
 
           <div className="space-y-3">
             {/* Razorpay Option */}
-            {/* <div
+            <div
               className={`border-2 rounded-lg p-4 transition-all ${
                 paymentMethod === "razorpay"
                   ? "border-teal-500 bg-teal-50/50"
@@ -827,14 +840,19 @@ export default function CheckoutPage() {
                       +4
                     </span>
                   </div>
-                  {paymentMethod === "razorpay" && (
-                    <p className="text-sm text-muted-foreground">
-                      You&apos;ll be redirected to Razorpay to complete your payment.
-                    </p>
-                  )}
+                  
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        You&apos;ll be redirected to Razorpay to complete your payment.
+                      </p>
+                      <p className="text-sm font-semibold text-green-600">
+                        🎉 Get 10% discount automatically applied!
+                      </p>
+                    </div>
+                  
                 </div>
               </label>
-            </div> */}
+            </div>
 
             {/* COD Option */}
             <div
@@ -945,9 +963,23 @@ export default function CheckoutPage() {
               ))}
             </div>
 
-            {/* Total */}
+            {/* Order Summary Breakdown */}
             <div className="border-t border-border pt-4 space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>₹ {subtotal.toLocaleString("en-IN")}.00</span>
+              </div>
+              {discountAmount > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-green-600 font-semibold">
+                    Prepaid Discount (10%)
+                  </span>
+                  <span className="text-green-600 font-semibold">
+                    -₹ {discountAmount.toLocaleString("en-IN")}.00
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-border">
                 <span className="font-bold">Total</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">INR</span>
@@ -963,6 +995,11 @@ export default function CheckoutPage() {
               <p className="text-xs text-muted-foreground">
                 Including ₹0.00 in taxes
               </p>
+              {discountAmount > 0 && (
+                <p className="text-xs text-green-600 font-semibold">
+                  💰 You saved ₹{discountAmount.toLocaleString("en-IN")}.00 with prepaid payment!
+                </p>
+              )}
             </div>
 
             {/* Error Message */}

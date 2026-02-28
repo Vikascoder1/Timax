@@ -12,7 +12,7 @@ import { Footer } from "@/components/footer"
 import { User, Package, Calendar, CreditCard, CheckCircle, Clock, XCircle } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { createClient } from "@/lib/supabase/client"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface OrderItem {
   id: string
@@ -61,7 +61,7 @@ export default function AccountPage() {
     if (!user) return
 
     try {
-      const supabase = createClient()
+      const supabase = getSupabaseClient()
       const { data, error } = await supabase
         .from("profiles")
         .select("*")

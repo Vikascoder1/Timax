@@ -3,6 +3,7 @@ import crypto from "crypto"
 import { createClient } from "@/lib/supabase/server"
 import { sendOrderConfirmationEmail } from "@/lib/email"
 import { convertToStorageUrl } from "@/lib/supabase-storage"
+import { createShiprocketOrder } from "@/lib/shiprocket"
 
 export async function POST(request: NextRequest) {
   try {
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
         }))
       ),
       subtotal: Number(fullOrder.subtotal),
+      discount: Number(fullOrder.discount || 0),
       tax: Number(fullOrder.tax),
       shippingCost: Number(fullOrder.shipping_cost),
       totalAmount: Number(fullOrder.total_amount),
@@ -141,12 +143,72 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email (don't fail if email fails)
+    console.log("📧 ===== PREPARING TO SEND ORDER CONFIRMATION EMAIL AFTER PAYMENT =====")
+    console.log("📧 Order number:", emailData.orderNumber)
+    console.log("📧 Customer email:", emailData.customerEmail)
+    console.log("📧 Items count:", emailData.items.length)
+    
     const emailResult = await sendOrderConfirmationEmail(emailData)
     if (!emailResult.success) {
-      console.error("Failed to send order confirmation email after payment:", emailResult.error)
+      const errorMsg = `❌❌❌ FAILED TO SEND ORDER EMAIL AFTER PAYMENT ❌❌❌`
+      console.error(errorMsg)
+      console.error("❌ Failed to send order confirmation email after payment:", emailResult.error)
+      if ((emailResult as { code?: string }).code) {
+        console.error("❌ Brevo error code:", (emailResult as { code?: string }).code)
+      }
+      console.error("❌ Full email result:", JSON.stringify(emailResult, null, 2))
     } else {
-      console.log("Order confirmation email sent successfully to:", fullOrder.customer_email)
+      const successMsg = `✅✅✅ Order confirmation email sent successfully after payment! ✅✅✅`
+      console.log(successMsg)
+      console.log("✅ Order confirmation email sent to:", fullOrder.customer_email)
+      if ((emailResult as { messageId?: string }).messageId) {
+        console.log("✅ Email messageId:", (emailResult as { messageId?: string }).messageId)
+      }
     }
+
+    // Send to Shiprocket
+    console.log(`📦 Attempting to push prepaid order ${fullOrder.order_number} to Shiprocket...`)
+    createShiprocketOrder({
+      orderId: fullOrder.order_number,
+      orderDate: new Date(fullOrder.created_at),
+      paymentMethod: "prepaid",
+      subtotal: Number(fullOrder.subtotal),
+      totalAmount: Number(fullOrder.total_amount),
+      shippingCost: Number(fullOrder.shipping_cost),
+      customerName: fullOrder.customer_name,
+      customerEmail: fullOrder.customer_email,
+      customerPhone: fullOrder.customer_phone,
+      shippingAddress: fullOrder.shipping_address,
+      shippingCity: fullOrder.shipping_city,
+      shippingState: fullOrder.shipping_state,
+      shippingPincode: fullOrder.shipping_pincode,
+      shippingCountry: fullOrder.shipping_country,
+      items: (orderItemsData || []).map((item: any) => ({
+        name: item.product_name,
+        productId: item.product_id,
+        sku: item.product_id, // We use product_id as SKU if sku unavailable
+        quantity: item.quantity,
+        price: Number(item.unit_price),
+      })),
+    }).then(res => {
+      if (res.success) {
+        console.log(`✅✅✅ Shiprocket order created successfully for prepaid order ${fullOrder.order_number} ✅✅✅`)
+        console.log(`   Shiprocket Order ID: ${res.data?.order_id || res.data?.id || 'N/A'}`)
+      } else {
+        console.error(`❌❌❌ Failed to push order ${fullOrder.order_number} to Shiprocket ❌❌❌`)
+        console.error(`   Error:`, res.error)
+        console.error(`   Error details:`, res.errorDetails || res.responseData)
+        if (res.error instanceof Error) {
+          console.error(`   Error message: ${res.error.message}`)
+          console.error(`   Error stack: ${res.error.stack}`)
+        }
+      }
+    }).catch(err => {
+      console.error(`❌❌❌ Exception pushing order ${fullOrder.order_number} to Shiprocket ❌❌❌`)
+      console.error(`   Exception:`, err)
+      console.error(`   Exception type:`, err?.constructor?.name || typeof err)
+      console.error(`   Exception message:`, err?.message || String(err))
+    })
 
     return NextResponse.json(
       {

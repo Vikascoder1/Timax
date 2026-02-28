@@ -58,7 +58,16 @@ async function sendEmailWithRetry(
       })
       
       const result = await Promise.race([emailPromise, timeoutPromise])
+      
+      // Validate the response - Brevo should return a messageId
+      const resultBody = (result as { body?: { messageId?: string } })?.body
+      if (!resultBody?.messageId) {
+        console.error("❌ Brevo response missing messageId:", JSON.stringify(result, null, 2))
+        throw new Error("Brevo API returned invalid response - missing messageId")
+      }
+      
       console.log(`✅ Email sent successfully on attempt ${attempt}`)
+      console.log(`📧 Brevo messageId: ${resultBody.messageId}`)
       return result as { response: unknown; body: unknown }
     } catch (error: unknown) {
       const errorObj = error as { code?: string; message?: string; cause?: { code?: string } }
@@ -109,6 +118,7 @@ export interface OrderEmailData {
     totalPrice: number
   }>
   subtotal: number
+  discount?: number
   tax: number
   shippingCost: number
   totalAmount: number
@@ -131,24 +141,41 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   console.log("📧 ===== SEND ORDER CONFIRMATION EMAIL CALLED =====")
   console.log("📧 Attempting to send order confirmation email to:", data.customerEmail)
   console.log("📧 Order number:", data.orderNumber)
+  console.log("📧 Customer name:", data.customerName)
+  console.log("📧 Items count:", data.items.length)
+  console.log("📧 Total amount:", data.totalAmount)
+  process.stdout.write(`📧 ===== SEND ORDER CONFIRMATION EMAIL CALLED =====\n`)
+  process.stdout.write(`📧 Attempting to send order confirmation email to: ${data.customerEmail}\n`)
+  process.stdout.write(`📧 Order number: ${data.orderNumber}\n`)
   
   const api = getBrevoApiInstance()
   if (!api) {
-    console.error("❌ BREVO_API_KEY not set. Email not sent.")
+    const errorMsg = "❌ BREVO_API_KEY not set. Email not sent."
+    console.error(errorMsg)
+    process.stdout.write(errorMsg + "\n")
     return { success: false, error: "Email service not configured" }
   }
 
   try {
     const sendSmtpEmail = new brevo.SendSmtpEmail()
     
-    const fromEmail = process.env.BREVO_FROM_EMAIL || "noreply@mscrafts.com"
+    // Extract email from BREVO_FROM_EMAIL if it contains name (e.g., "Name <email@domain.com>")
+    let fromEmail = process.env.BREVO_FROM_EMAIL || "noreply@mscrafts.com"
     const fromName = process.env.BREVO_FROM_NAME || "MS CRAFTS"
+    
+    // If BREVO_FROM_EMAIL contains angle brackets, extract just the email
+    const emailRegex = /<([^>]+)>/
+    const emailMatch = emailRegex.exec(fromEmail)
+    if (emailMatch) {
+      fromEmail = emailMatch[1]
+    }
     
     console.log("📧 Email configuration:", {
       from: `${fromName} <${fromEmail}>`,
       to: data.customerEmail,
       subject: `Order Confirmation - ${data.orderNumber}`,
     })
+    process.stdout.write(`📧 Email configuration: from="${fromName} <${fromEmail}>", to="${data.customerEmail}"\n`)
     
     sendSmtpEmail.subject = `Order Confirmation - ${data.orderNumber}`
     sendSmtpEmail.htmlContent = generateOrderEmailHTML(data)
@@ -163,15 +190,42 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
     }
 
     console.log("📤 Sending email via Brevo API with retry logic...")
+    process.stdout.write("📤 Sending email via Brevo API with retry logic...\n")
+    
     const result = await sendEmailWithRetry(api, sendSmtpEmail, 3)
-    console.log("✅✅✅ Email sent successfully!")
+    
+    // Validate the response
+    const resultBody = result.body as { messageId?: string; code?: string; message?: string }
+    if (!resultBody?.messageId) {
+      const errorMsg = resultBody?.message || "Email sent but no messageId received"
+      const fullErrorMsg = `❌❌❌ EMAIL SEND FAILED - NO MESSAGE ID ❌❌❌`
+      console.error(fullErrorMsg)
+      console.error("❌ Brevo response:", JSON.stringify(resultBody, null, 2))
+      process.stdout.write(fullErrorMsg + "\n")
+      process.stdout.write(`❌ Brevo response: ${JSON.stringify(resultBody, null, 2)}\n`)
+      return { 
+        success: false, 
+        error: errorMsg,
+        code: resultBody?.code
+      }
+    }
+    
+    const successMsg = `✅✅✅ Email sent successfully! ✅✅✅`
+    console.log(successMsg)
+    console.log("✅ Brevo messageId:", resultBody.messageId)
     console.log("✅ Brevo response:", JSON.stringify(result.body, null, 2))
     console.log("📧 ===== EMAIL SENT SUCCESSFULLY =====")
+    process.stdout.write(successMsg + "\n")
+    process.stdout.write(`✅ Brevo messageId: ${resultBody.messageId}\n`)
+    process.stdout.write(`📧 ===== EMAIL SENT SUCCESSFULLY =====\n`)
     
-    return { success: true, data: result }
+    return { success: true, data: result, messageId: resultBody.messageId }
   } catch (error: unknown) {
-    console.error("❌❌❌ ERROR sending order confirmation email:")
+    const errorMsg = `❌❌❌ ERROR sending order confirmation email ❌❌❌`
+    console.error(errorMsg)
     console.error("❌ Error object:", error)
+    process.stdout.write(errorMsg + "\n")
+    
     const brevoError = error as { response?: { body?: { message?: string; code?: string } } }
     const errorMessage = 
       brevoError?.response?.body?.message ||
@@ -185,6 +239,17 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
     })
     console.error("❌ Full error:", JSON.stringify(error, null, 2))
     console.log("📧 ===== EMAIL SEND FAILED =====")
+    process.stdout.write(`❌ Error details: message="${errorMessage}", code="${errorCode || 'N/A'}"\n`)
+    process.stdout.write(`❌ Full error: ${JSON.stringify(error, null, 2)}\n`)
+    process.stdout.write(`📧 ===== EMAIL SEND FAILED =====\n`)
+    
+    // Check for common issues
+    if (errorMessage.includes("sender") || errorMessage.includes("from") || errorCode === "invalid_parameter") {
+      console.error("⚠️ Sender email might not be verified in Brevo!")
+      console.error("⚠️ Please verify your sender email in Brevo Dashboard → Senders & IP → Senders")
+      process.stdout.write("⚠️ Sender email might not be verified in Brevo!\n")
+      process.stdout.write("⚠️ Please verify your sender email in Brevo Dashboard → Senders & IP → Senders\n")
+    }
     
     return { 
       success: false, 
@@ -220,9 +285,25 @@ export async function sendSignupConfirmationEmail(data: SignupEmailData) {
 
     console.log("📤 Sending welcome email via Brevo with retry logic...")
     const result = await sendEmailWithRetry(api, sendSmtpEmail, 3)
-    console.log("✅ Welcome email sent successfully. Response:", JSON.stringify(result.body, null, 2))
     
-    return { success: true, data: result }
+    // Validate the response
+    const resultBody = result.body as { messageId?: string; code?: string; message?: string }
+    if (!resultBody.messageId) {
+      const errorMsg = resultBody.message || "Email sent but no messageId received"
+      console.error("❌❌❌ WELCOME EMAIL SEND FAILED - NO MESSAGE ID ❌❌❌")
+      console.error("❌ Brevo response:", JSON.stringify(resultBody, null, 2))
+      return { 
+        success: false, 
+        error: errorMsg,
+        code: resultBody.code
+      }
+    }
+    
+    console.log("✅ Welcome email sent successfully!")
+    console.log("✅ Brevo messageId:", resultBody.messageId)
+    console.log("✅ Brevo response:", JSON.stringify(result.body, null, 2))
+    
+    return { success: true, data: result, messageId: resultBody.messageId }
   } catch (error: unknown) {
     console.error("❌ Error sending signup confirmation email:", error)
     const brevoError = error as { response?: { body?: { message?: string; code?: string } } }
@@ -318,11 +399,13 @@ function generateOrderEmailHTML(data: OrderEmailData): string {
     
     <div style="background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: right;">
       <p style="margin: 5px 0;">Subtotal: ₹${data.subtotal.toLocaleString("en-IN")}.00</p>
+      ${(data.discount || 0) > 0 ? `<p style="margin: 5px 0; color: #059669; font-weight: 600;">Prepaid Discount (10%): -₹${(data.discount || 0).toLocaleString("en-IN")}.00</p>` : ""}
       ${data.tax > 0 ? `<p style="margin: 5px 0;">Tax: ₹${data.tax.toLocaleString("en-IN")}.00</p>` : ""}
       ${data.shippingCost > 0 ? `<p style="margin: 5px 0;">Shipping: ₹${data.shippingCost.toLocaleString("en-IN")}.00</p>` : ""}
       <p style="margin: 10px 0; font-size: 18px; font-weight: bold; color: #14b8a6; border-top: 2px solid #e5e7eb; padding-top: 10px;">
         Total: ₹${data.totalAmount.toLocaleString("en-IN")}.00
       </p>
+      ${(data.discount || 0) > 0 ? `<p style="margin: 10px 0 0 0; font-size: 14px; color: #059669; font-weight: 600;">💰 You saved ₹${(data.discount || 0).toLocaleString("en-IN")}.00 with prepaid payment!</p>` : ""}
     </div>
     
     <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">

@@ -9,6 +9,12 @@ export interface Product {
   discount: string
   images: string[] // Array of 4 images for slideshow
   type: "ocean" | "green" | "triangle"
+  pricesBySize: {
+    "12 Inch": number
+    "15 Inch": number
+    "18 Inch": number
+    "27 Inch": number
+  }
 }
 
 export const products: Record<string, Product> = {
@@ -18,9 +24,10 @@ export const products: Record<string, Product> = {
     alt: "Shiny Ocean With Gold Bezel Resin Wall Clock",
     rating: 4.5,
     reviewCount: 27,
-    originalPrice: 20,
-    salePrice: 20,
-    discount: "TEST",
+    // Base price shown on listing (use 12 inch as representative)
+    originalPrice: 10,
+    salePrice: 10,
+    discount: "",
     images: [
       "/images/ocean.jpeg",
       "/images/ocean2.jpeg",
@@ -28,6 +35,12 @@ export const products: Record<string, Product> = {
       "/images/ocean4.jpeg",
     ],
     type: "ocean",
+    pricesBySize: {
+      "12 Inch": 10,
+      "15 Inch": 2999,
+      "18 Inch": 3599,
+      "27 Inch": 6499,
+    },
   },
   green: {
     id: "green",
@@ -35,9 +48,10 @@ export const products: Record<string, Product> = {
     alt: "Jungle Green The luxury ResinArt Resin Clock",
     rating: 4.6,
     reviewCount: 12,
-    originalPrice: 4998,
+    // Base price shown on listing (use 12 inch as representative)
+    originalPrice: 2499,
     salePrice: 2499,
-    discount: "50% OFF",
+    discount: "",
     images: [
       "/images/green.jpeg",
       "/images/green2.jpeg",
@@ -45,16 +59,23 @@ export const products: Record<string, Product> = {
       "/images/green4.jpeg",
     ],
     type: "green",
+    pricesBySize: {
+      "12 Inch": 2499,
+      "15 Inch": 2899,
+      "18 Inch": 3499,
+      "27 Inch": 6399,
+    },
   },
   triangle: {
     id: "triangle",
     name: "Shiny Triangle Green With Golden Roman Wall Clock",
     alt: "Shiny Triangle Green With Golden Roman Wall Clock",
-    rating: 5.0,
+    rating: 5,
     reviewCount: 2,
-    originalPrice: 5498,
-    salePrice: 2749,
-    discount: "50% OFF",
+    // Base price shown on listing (use 12 inch as representative)
+    originalPrice: 2599,
+    salePrice: 2599,
+    discount: "",
     images: [
       "/images/triangle.jpeg",
       "/images/triangle2.jpeg",
@@ -62,6 +83,12 @@ export const products: Record<string, Product> = {
       "/images/triangle4.jpeg",
     ],
     type: "triangle",
+    pricesBySize: {
+      "12 Inch": 2599,
+      "15 Inch": 2999,
+      "18 Inch": 3599,
+      "27 Inch": 6499,
+    },
   },
 }
 
@@ -78,5 +105,11 @@ export function getAllProducts(): Product[] {
 // Get related products (excluding current product)
 export function getRelatedProducts(currentProductId: string): Product[] {
   return getAllProducts().filter((p) => p.id !== currentProductId)
+}
+
+// Get price for a specific size
+export function getPriceBySize(product: Product, size: string): number {
+  const sizePrice = product.pricesBySize[size as keyof typeof product.pricesBySize]
+  return sizePrice ?? product.salePrice
 }
 
