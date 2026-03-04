@@ -25,7 +25,8 @@ export const products: Record<string, Product> = {
     rating: 4.5,
     reviewCount: 27,
     // Base price shown on listing (use 12 inch as representative)
-    originalPrice: 10,
+    // originalPrice is always double the base sale price
+    originalPrice: 20,
     salePrice: 10,
     discount: "",
     images: [
@@ -49,7 +50,7 @@ export const products: Record<string, Product> = {
     rating: 4.6,
     reviewCount: 12,
     // Base price shown on listing (use 12 inch as representative)
-    originalPrice: 2499,
+    originalPrice: 4998,
     salePrice: 2499,
     discount: "",
     images: [
@@ -73,7 +74,8 @@ export const products: Record<string, Product> = {
     rating: 5,
     reviewCount: 2,
     // Base price shown on listing (use 12 inch as representative)
-    originalPrice: 2599,
+    // originalPrice is always double the base sale price
+    originalPrice: 5198,
     salePrice: 2599,
     discount: "",
     images: [

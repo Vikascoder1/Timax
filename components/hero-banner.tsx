@@ -41,7 +41,7 @@ export function HeroBanner() {
 
   return (
     <section className="relative w-full">
-      <div className="relative w-full aspect-[5/5] overflow-hidden">
+      <div className="relative w-full aspect-[5/5] overflow-hidden rounded-b-3xl bg-black">
         {slides.map((slide, index) => (
           <div
             key={index}
@@ -53,25 +53,25 @@ export function HeroBanner() {
               src={slide.image || "/placeholder.svg"}
               alt={slide.alt}
               fill
-              className="object-cover"
+              className="object-cover opacity-95"
               priority={index === 0}
             />
           </div>
         ))}
 
         {/* Text Overlay */}
-        {/* <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1a1a1a]/80 via-[#1a1a1a]/40 to-transparent">
+        {/* <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
           <p
-            className="text-[#f5f5f5] text-lg italic font-light"
+            className="text-sm md:text-base text-teal-100/90 italic font-light"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {slides[currentSlide].subline1}
           </p>
-          <h1 className="text-[#f5f5f5] text-3xl font-bold tracking-wide">
+          <h1 className="mt-1 text-2xl md:text-3xl font-semibold tracking-wide text-white">
             {slides[currentSlide].heading}
           </h1>
           <p
-            className="text-[#f5f5f5] text-xl italic font-light"
+            className="mt-1 text-sm md:text-lg text-slate-100/90 italic font-light"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {slides[currentSlide].subline2}

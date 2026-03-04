@@ -166,49 +166,83 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send to Shiprocket
-    console.log(`📦 Attempting to push prepaid order ${fullOrder.order_number} to Shiprocket...`)
-    createShiprocketOrder({
-      orderId: fullOrder.order_number,
-      orderDate: new Date(fullOrder.created_at),
-      paymentMethod: "prepaid",
-      subtotal: Number(fullOrder.subtotal),
-      totalAmount: Number(fullOrder.total_amount),
-      shippingCost: Number(fullOrder.shipping_cost),
-      customerName: fullOrder.customer_name,
-      customerEmail: fullOrder.customer_email,
-      customerPhone: fullOrder.customer_phone,
-      shippingAddress: fullOrder.shipping_address,
-      shippingCity: fullOrder.shipping_city,
-      shippingState: fullOrder.shipping_state,
-      shippingPincode: fullOrder.shipping_pincode,
-      shippingCountry: fullOrder.shipping_country,
-      items: (orderItemsData || []).map((item: any) => ({
-        name: item.product_name,
-        productId: item.product_id,
-        sku: item.product_id, // We use product_id as SKU if sku unavailable
-        quantity: item.quantity,
-        price: Number(item.unit_price),
-      })),
-    }).then(res => {
-      if (res.success) {
-        console.log(`✅✅✅ Shiprocket order created successfully for prepaid order ${fullOrder.order_number} ✅✅✅`)
-        console.log(`   Shiprocket Order ID: ${res.data?.order_id || res.data?.id || 'N/A'}`)
-      } else {
-        console.error(`❌❌❌ Failed to push order ${fullOrder.order_number} to Shiprocket ❌❌❌`)
-        console.error(`   Error:`, res.error)
-        console.error(`   Error details:`, res.errorDetails || res.responseData)
-        if (res.error instanceof Error) {
-          console.error(`   Error message: ${res.error.message}`)
-          console.error(`   Error stack: ${res.error.stack}`)
-        }
-      }
-    }).catch(err => {
-      console.error(`❌❌❌ Exception pushing order ${fullOrder.order_number} to Shiprocket ❌❌❌`)
-      console.error(`   Exception:`, err)
-      console.error(`   Exception type:`, err?.constructor?.name || typeof err)
-      console.error(`   Exception message:`, err?.message || String(err))
-    })
+    // Send prepaid order to Shiprocket (mirrors COD flow logging & behavior)
+    const shiprocketStartMsg = `📦📦📦 ATTEMPTING TO PUSH PREPAID ORDER ${fullOrder.order_number} TO SHIPROCKET 📦📦📦\n`
+    console.log(shiprocketStartMsg)
+    process.stdout.write(shiprocketStartMsg)
+
+    try {
+      process.stdout.write(`🚨🚨🚨 CALLING createShiprocketOrder FOR PREPAID ORDER NOW 🚨🚨🚨\n`)
+
+      const shiprocketPromise = createShiprocketOrder({
+        orderId: fullOrder.order_number,
+        orderDate: new Date(fullOrder.created_at),
+        paymentMethod: "prepaid",
+        subtotal: Number(fullOrder.subtotal),
+        totalAmount: Number(fullOrder.total_amount),
+        shippingCost: Number(fullOrder.shipping_cost),
+        customerName: fullOrder.customer_name,
+        customerEmail: fullOrder.customer_email,
+        customerPhone: fullOrder.customer_phone,
+        shippingAddress: fullOrder.shipping_address,
+        shippingCity: fullOrder.shipping_city,
+        shippingState: fullOrder.shipping_state,
+        shippingPincode: fullOrder.shipping_pincode,
+        shippingCountry: fullOrder.shipping_country,
+        items: (orderItemsData || []).map((item: any) => ({
+          name: item.product_name,
+          productId: item.product_id,
+          sku: item.product_id, // We use product_id as SKU if sku unavailable
+          quantity: item.quantity,
+          price: Number(item.unit_price),
+        })),
+      })
+
+      process.stdout.write(`🚨🚨🚨 createShiprocketOrder (PREPAID) CALLED, WAITING FOR RESULT 🚨🚨🚨\n`)
+
+      shiprocketPromise
+        .then((res) => {
+          const resultLog = `✅✅✅ SHIPROCKET RESULT FOR PREPAID ORDER ${fullOrder.order_number} ✅✅✅\n`
+          console.log(resultLog)
+          process.stdout.write(resultLog)
+
+          if (res.success) {
+            const successMsg = `✅✅✅ Shiprocket order created successfully for PREPAID order ${fullOrder.order_number} ✅✅✅\n`
+            console.log(successMsg)
+            process.stdout.write(successMsg)
+            console.log(`   Shiprocket Order ID: ${res.data?.order_id || res.data?.id || "N/A"}`)
+            process.stdout.write(
+              `   Shiprocket Order ID: ${res.data?.order_id || res.data?.id || "N/A"}\n`
+            )
+          } else {
+            const errorMsg = `❌❌❌ Failed to push PREPAID order ${fullOrder.order_number} to Shiprocket ❌❌❌\n`
+            console.error(errorMsg)
+            process.stdout.write(errorMsg)
+            console.error(`   Error:`, res.error)
+            console.error(`   Error details:`, res.errorDetails || res.responseData)
+            if (res.error instanceof Error) {
+              console.error(`   Error message: ${res.error.message}`)
+              console.error(`   Error stack: ${res.error.stack}`)
+              process.stdout.write(`   Error message: ${res.error.message}\n`)
+            }
+          }
+        })
+        .catch((err) => {
+          const catchMsg = `❌❌❌ EXCEPTION IN SHIPROCKET PROMISE FOR PREPAID ORDER ${fullOrder.order_number} ❌❌❌\n`
+          console.error(catchMsg)
+          process.stdout.write(catchMsg)
+          console.error(`   Exception:`, err)
+          console.error(`   Exception type:`, err?.constructor?.name || typeof err)
+          console.error(`   Exception message:`, err?.message || String(err))
+          process.stdout.write(`   Exception message: ${err?.message || String(err)}\n`)
+        })
+    } catch (err) {
+      const syncErrorMsg = `❌❌❌ SYNCHRONOUS ERROR CALLING SHIPROCKET FOR PREPAID ORDER ${fullOrder.order_number} ❌❌❌\n`
+      console.error(syncErrorMsg)
+      process.stdout.write(syncErrorMsg)
+      console.error(`   Sync error:`, err)
+      process.stdout.write(`   Sync error: ${String(err)}\n`)
+    }
 
     return NextResponse.json(
       {

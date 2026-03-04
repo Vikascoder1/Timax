@@ -161,7 +161,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
     
     // Extract email from BREVO_FROM_EMAIL if it contains name (e.g., "Name <email@domain.com>")
     let fromEmail = process.env.BREVO_FROM_EMAIL || "noreply@mscrafts.com"
-    const fromName = process.env.BREVO_FROM_NAME || "MS CRAFTS"
+    const fromName = process.env.BREVO_FROM_NAME || "MS HandCrafts"
     
     // If BREVO_FROM_EMAIL contains angle brackets, extract just the email
     const emailRegex = /<([^>]+)>/
@@ -343,7 +343,7 @@ function generateOrderEmailHTML(data: OrderEmailData): string {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background-color: #14b8a6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="margin: 0;">MS CRAFTS</h1>
+    <h1 style="margin: 0;">MS HandCrafts</h1>
     <p style="margin: 10px 0 0 0;">Order Confirmation</p>
   </div>
   
@@ -422,7 +422,7 @@ function generateOrderEmailHTML(data: OrderEmailData): string {
     </p>
     
     <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
-      Thank you for choosing MS CRAFTS!
+      Thank you for choosing MS HandCrafts!
     </p>
   </div>
 </body>
@@ -439,11 +439,11 @@ function generateSignupEmailHTML(data: SignupEmailData): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to MS CRAFTS - Account Created Successfully!</title>
+  <title>Welcome to MS HandCrafts - Account Created Successfully!</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
   <div style="background-color: #14b8a6; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="margin: 0; font-size: 28px;">MS CRAFTS</h1>
+    <h1 style="margin: 0; font-size: 28px;">MS HandCrafts</h1>
     <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Welcome to Our Family!</p>
   </div>
   
@@ -460,7 +460,7 @@ function generateSignupEmailHTML(data: SignupEmailData): string {
     </p>
     
     <p style="font-size: 16px; margin-bottom: 20px; color: #555;">
-      Thank you for joining MS CRAFTS! We're absolutely thrilled to have you as part of our community of craft enthusiasts and art lovers.
+      Thank you for joining MS HandCrafts! We're absolutely thrilled to have you as part of our community of craft enthusiasts and art lovers.
     </p>
     
     <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #14b8a6;">
@@ -517,14 +517,14 @@ function generateSignupEmailHTML(data: SignupEmailData): string {
       </p>
       <p style="font-size: 14px; color: #6b7280; margin: 10px 0 0 0;">
         Warm regards,<br>
-        <strong style="color: #14b8a6;">The MS CRAFTS Team</strong>
+        <strong style="color: #14b8a6;">The MS HandCrafts Team</strong>
       </p>
     </div>
   </div>
   
   <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
     <p style="margin: 0;">This is an automated email. Please do not reply to this message.</p>
-    <p style="margin: 10px 0 0 0;">© ${new Date().getFullYear()} MS CRAFTS. All rights reserved.</p>
+    <p style="margin: 10px 0 0 0;">© ${new Date().getFullYear()} MS HandCrafts. All rights reserved.</p>
   </div>
 </body>
 </html>

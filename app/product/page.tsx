@@ -11,6 +11,7 @@ import { WhatsappButton } from "@/components/whatsapp-button"
 import { ReviewsSection } from "@/components/reviews-section"
 import { AboutSection } from "@/components/about-section"
 import { Footer } from "@/components/footer"
+import { ProductCard } from "@/components/product-card"
 import { getProductById, getRelatedProducts, getPriceBySize } from "@/lib/products"
 import Link from "next/link"
 import { useCart } from "@/lib/cart-context"
@@ -32,7 +33,8 @@ function ProductPageContent() {
   
   // Get current price based on selected size
   const currentPrice = product ? getPriceBySize(product, selectedSize) : 0
-  const currentOriginalPrice = product ? currentPrice : 0 // For now, same as sale price
+  // Show original price as double the current sale price for all sizes
+  const currentOriginalPrice = product ? currentPrice * 2 : 0
 
   // Reset image index when product changes
   useEffect(() => {
@@ -379,56 +381,25 @@ function ProductPageContent() {
         {/* Related Products */}
         <div className="px-4 py-8 border-t border-border">
           <h2 className="text-2xl font-bold mb-6">You may also like</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {relatedProducts.map((relatedProduct) => (
-              <Link
+              <ProductCard
                 key={relatedProduct.id}
-                href={`/product?id=${relatedProduct.id}`}
-                className="border border-border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <div className="bg-muted h-64 relative">
-                  <img
-                    src={relatedProduct.images[0]}
-                    alt={relatedProduct.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 left-2 bg-teal-600 text-white px-2 py-1 rounded text-xs font-semibold">
-                    Sale
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                    MS CRAFTS
-                  </p>
-                  <h3 className="font-semibold text-sm mb-2 line-clamp-2">
-                    {relatedProduct.name.length > 40
-                      ? relatedProduct.name.substring(0, 40) + "..."
-                      : relatedProduct.name}
-                  </h3>
-                  <div className="flex items-center gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-xs text-orange-500">
-                        ★
-                      </span>
-                    ))}
-                    <span className="text-xs ml-1">{relatedProduct.reviewCount} review{relatedProduct.reviewCount !== 1 ? "s" : ""}</span>
-                  </div>
-                  <div className="space-y-1 mb-4">
-                    <p className="line-through text-xs text-muted-foreground">
-                      ₹ {relatedProduct.originalPrice.toLocaleString("en-IN")}.00
-                    </p>
-                    <p className="font-bold">₹ {relatedProduct.salePrice.toLocaleString("en-IN")}.00</p>
-                    {relatedProduct.discount && (
-                      <div className="inline-block bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold">
-                        {relatedProduct.discount}
-                      </div>
-                    )}
-                  </div>
-                  <button className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:bg-black/90 transition-colors">
-                    Add to Cart
-                  </button>
-                </div>
-              </Link>
+                product={{
+                  id: relatedProduct.id,
+                  image: relatedProduct.images[0],
+                  alt: relatedProduct.alt,
+                  name:
+                    relatedProduct.name.length > 35
+                      ? relatedProduct.name.substring(0, 35) + "..."
+                      : relatedProduct.name,
+                  rating: relatedProduct.rating,
+                  reviewCount: relatedProduct.reviewCount,
+                  originalPrice: relatedProduct.originalPrice,
+                  salePrice: relatedProduct.salePrice,
+                  discount: relatedProduct.discount,
+                }}
+              />
             ))}
           </div>
         </div>

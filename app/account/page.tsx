@@ -207,9 +207,9 @@ export default function AccountPage() {
             }
             if (orders.length === 0) {
               return (
-                <div className="bg-muted rounded-lg p-8 text-center">
-                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">You haven&apos;t placed any orders yet.</p>
+          <div className="bg-muted rounded-lg p-8 text-center">
+            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground">You haven&apos;t placed any orders yet.</p>
                   <Link
                     href="/"
                     className="inline-block mt-4 text-sm text-primary hover:underline"
@@ -307,7 +307,7 @@ export default function AccountPage() {
                   </div>
                 </div>
               ))}
-            </div>
+          </div>
             )
           })()}
         </div>

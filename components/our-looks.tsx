@@ -25,12 +25,15 @@ export function OurLooks() {
 
       <div className="flex flex-col gap-4 mt-6">
         {lookImages.map((image) => (
-          <div key={image.alt} className="relative w-full aspect-[4/4] rounded-lg overflow-hidden">
+          <div
+            key={image.alt}
+            className="group relative w-full aspect-[4/4] rounded-lg overflow-hidden"
+          >
             <Image
               src={image.src || "/placeholder.svg"}
               alt={image.alt}
               fill
-              className="object-cover"
+              className="object-cover transform transition-transform duration-500 ease-out group-hover:scale-110"
             />
           </div>
         ))}
