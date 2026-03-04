@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     process.stdout.write(`✅ Payment method validation passed: ${paymentMethod}\n`)
 
     // Generate order number with retry
@@ -103,30 +103,30 @@ export async function POST(request: NextRequest) {
     // Create order with retry
     const orderResult = await retrySupabaseOperation(async () => {
       return await supabase
-        .from("orders")
-        .insert({
-          user_id: userId || null,
-          order_number: orderNumber,
-          status: paymentMethod === "cod" ? "confirmed" : "pending_payment",
-          payment_method: paymentMethod,
-          payment_status: paymentMethod === "cod" ? "completed" : "pending",
-          customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone,
-          shipping_address: shippingAddress,
-          shipping_city: shippingCity,
-          shipping_state: shippingState,
-          shipping_pincode: shippingPincode,
-          shipping_country: shippingCountry,
-          subtotal: subtotal,
+      .from("orders")
+      .insert({
+        user_id: userId || null,
+        order_number: orderNumber,
+        status: paymentMethod === "cod" ? "confirmed" : "pending_payment",
+        payment_method: paymentMethod,
+        payment_status: paymentMethod === "cod" ? "completed" : "pending",
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        shipping_address: shippingAddress,
+        shipping_city: shippingCity,
+        shipping_state: shippingState,
+        shipping_pincode: shippingPincode,
+        shipping_country: shippingCountry,
+        subtotal: subtotal,
           discount: discount || 0,
-          tax: tax,
-          shipping_cost: shippingCost,
-          total_amount: totalAmount,
-          special_instructions: specialInstructions || null,
-        })
-        .select()
-        .single()
+        tax: tax,
+        shipping_cost: shippingCost,
+        total_amount: totalAmount,
+        special_instructions: specialInstructions || null,
+      })
+      .select()
+      .single()
     })
 
     const order = orderResult.data
@@ -177,8 +177,8 @@ export async function POST(request: NextRequest) {
 
     const itemsResult = await retrySupabaseOperation(async () => {
       return await supabase
-        .from("order_items")
-        .insert(orderItems)
+      .from("order_items")
+      .insert(orderItems)
     })
 
     if (itemsResult.error) {
@@ -237,14 +237,14 @@ export async function POST(request: NextRequest) {
         }),
         items: await Promise.all(
           (orderItemsData || []).map(async (item: OrderItem) => ({
-            name: item.product_name,
+          name: item.product_name,
             image: item.product_image
               ? await convertToStorageUrl(item.product_image)
               : undefined,
-            size: item.size,
-            quantity: item.quantity,
-            unitPrice: Number(item.unit_price),
-            totalPrice: Number(item.total_price),
+          size: item.size,
+          quantity: item.quantity,
+          unitPrice: Number(item.unit_price),
+          totalPrice: Number(item.total_price),
           }))
         ),
         subtotal: Number(order.subtotal),
@@ -410,7 +410,7 @@ export async function POST(request: NextRequest) {
     if (paymentMethod === "cod") {
       process.stdout.write(`📊 EMAIL AND SHIPROCKET CALLS INITIATED (check logs above)\n`)
     }
-    
+
     return NextResponse.json(
       {
         success: true,

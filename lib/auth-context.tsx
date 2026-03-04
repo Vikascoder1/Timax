@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  
+
   // Use refs to ensure singleton client and prevent multiple listeners
   const supabaseRef = useRef<ReturnType<typeof getSupabaseClient> | null>(null)
   const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null)
@@ -28,13 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize Supabase client as singleton (only once)
   if (!supabaseRef.current) {
-    try {
+  try {
       supabaseRef.current = getSupabaseClient()
-    } catch (err) {
-      // Supabase not configured - auth will be disabled
-      console.warn("Supabase not configured. Authentication features will be disabled.")
-      console.warn("Please set up environment variables. See SETUP_SUPABASE.md for instructions.")
-      setLoading(false)
+  } catch (err) {
+    // Supabase not configured - auth will be disabled
+    console.warn("Supabase not configured. Authentication features will be disabled.")
+    console.warn("Please set up environment variables. See SETUP_SUPABASE.md for instructions.")
+    setLoading(false)
     }
   }
 
@@ -82,8 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               console.warn("⚠️ Error getting session:", error)
             }
           }
-          setSession(session)
-          setUser(session?.user ?? null)
+      setSession(session)
+      setUser(session?.user ?? null)
         }
         setLoading(false)
       })
@@ -95,21 +95,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!errorMessage.includes("getaddrinfo") && !errorMessage.includes("EAI_AGAIN") && !errorMessage.includes("ERR_NAME_NOT_RESOLVED")) {
           console.error("❌ Failed to get session:", error)
         }
-        setLoading(false)
-      })
+      setLoading(false)
+    })
 
     // Set up auth state change listener (only once)
     // This listener handles token refresh automatically
     try {
-      const {
+    const {
         data: { subscription: authSubscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
         if (!isMounted) return
         
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      })
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
       subscriptionRef.current = authSubscription
     } catch (error) {
       console.warn("⚠️ Could not set up auth state listener:", error)
@@ -144,14 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const signUpPromise = supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName || "",
-          },
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName || "",
         },
-      })
+      },
+    })
 
       // Use a longer timeout and better error handling
       const timeoutId = setTimeout(() => {
@@ -191,11 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log("   3. Check SMTP settings are configured")
         }
         
-        setUser(data.user)
-        setSession(data.session)
-      }
+      setUser(data.user)
+      setSession(data.session)
+    }
 
-      return { error }
+    return { error }
     } catch (error: unknown) {
       console.error("❌ Unexpected signup error:", error)
       
@@ -236,9 +236,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const signInPromise = supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      email,
+      password,
+    })
 
       // Use a timeout logger (but don't cancel the request)
       const timeoutId = setTimeout(() => {
@@ -263,11 +263,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data?.user) {
         console.log("✅ Signin successful")
-        setUser(data.user)
-        setSession(data.session)
-      }
+      setUser(data.user)
+      setSession(data.session)
+    }
 
-      return { error }
+    return { error }
     } catch (error: unknown) {
       console.error("❌ Unexpected signin error:", error)
       

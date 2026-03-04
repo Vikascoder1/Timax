@@ -11,7 +11,7 @@ interface ProductSectionProps {
 
 export function ProductSection({ title, subtitle, products }: ProductSectionProps) {
   return (
-    <section className="px-4 py-8">
+    <section className="px-4 py-10">
       <h2
         className="text-2xl md:text-3xl font-bold text-center text-foreground text-balance"
         style={{ fontFamily: "Georgia, serif" }}
