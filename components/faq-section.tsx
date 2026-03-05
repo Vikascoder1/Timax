@@ -41,22 +41,22 @@ export function FaqSection() {
   }
 
   return (
-    <section className="px-4 py-8">
+    <section className="px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-4xl mx-auto">
       <h2
-        className="text-2xl md:text-3xl font-bold text-foreground"
+        className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground"
         style={{ fontFamily: "Georgia, serif" }}
       >
         {"FAQ's"}
       </h2>
 
-      <div className="mt-6 divide-y divide-border border-t border-border">
+      <div className="mt-6 md:mt-8 divide-y divide-border border-t border-border">
         {faqs.map((faq, index) => (
           <div key={index} className="py-4">
             <button
               onClick={() => toggleItem(index)}
               className="flex items-center justify-between w-full text-left"
             >
-              <span className="text-sm font-semibold text-foreground pr-4">
+              <span className="text-sm md:text-base font-semibold text-foreground pr-4">
                 {faq.question}
               </span>
               <ChevronUp
@@ -66,7 +66,7 @@ export function FaqSection() {
               />
             </button>
             {openItems.includes(index) && (
-              <p className="text-sm text-muted-foreground mt-3 leading-relaxed whitespace-pre-line">
+              <p className="text-sm md:text-base text-muted-foreground mt-3 leading-relaxed whitespace-pre-line">
                 {faq.answer}
               </p>
             )}

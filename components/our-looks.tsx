@@ -15,15 +15,15 @@ const lookImages = [
 
 export function OurLooks() {
   return (
-    <section className="px-4 py-8">
+    <section className="px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-7xl mx-auto">
       <h2
-        className="text-2xl md:text-3xl font-bold text-center text-foreground uppercase tracking-wider text-balance"
+        className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-foreground uppercase tracking-wider text-balance"
         style={{ fontFamily: "Georgia, serif" }}
       >
         Our Looks
       </h2>
 
-      <div className="flex flex-col gap-4 mt-6">
+      <div className="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 mt-6 md:mt-8">
         {lookImages.map((image) => (
           <div
             key={image.alt}

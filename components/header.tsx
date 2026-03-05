@@ -81,7 +81,7 @@ export function Header({ isSidebarOpen, onToggleSidebar }: HeaderProps) {
 
   return (
     <>
-      <header className="flex items-center justify-between px-4 py-3 bg-background border-b border-border">
+      <header className="flex items-center justify-between px-4 md:px-6 lg:px-8 py-3 bg-background border-b border-border max-w-7xl mx-auto">
         <button
           onClick={onToggleSidebar}
           aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
@@ -97,7 +97,7 @@ export function Header({ isSidebarOpen, onToggleSidebar }: HeaderProps) {
         <div className="flex-1 flex justify-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-lg tracking-wide"
+            className="inline-flex items-center gap-1.5 text-lg md:text-xl tracking-wide"
           >
             <span className="px-1.5 py-0.5 rounded-md bg-slate-900 text-slate-100 text-sm font-semibold border border-slate-700">
               MS
