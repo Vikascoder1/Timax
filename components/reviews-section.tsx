@@ -37,19 +37,19 @@ export function ReviewsSection() {
   const review = reviews[currentReview]
 
   return (
-    <section className="px-4 py-8">
+    <section className="px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-7xl mx-auto">
       <h2
-        className="text-2xl md:text-3xl font-bold text-center text-foreground text-balance"
+        className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-foreground text-balance"
         style={{ fontFamily: "Georgia, serif" }}
       >
         Let customers speak for us
       </h2>
-      <p className="text-center text-muted-foreground mt-1 text-sm">
+      <p className="text-center text-muted-foreground mt-1 text-sm md:text-base">
         from 78 reviews
       </p>
 
       {/* Review Card Carousel */}
-      <div className="mt-6 relative">
+      <div className="mt-6 md:mt-8 relative max-w-2xl mx-auto">
         {/* Thumbnail strip */}
         <div className="flex gap-2 mb-4 overflow-hidden justify-center">
           {reviews.map((r, i) => (
@@ -66,7 +66,7 @@ export function ReviewsSection() {
         </div>
 
         {/* Main review card */}
-        <div className="bg-card border border-border rounded-lg p-6 text-center mx-auto max-w-xs">
+        <div className="bg-card border border-border rounded-lg p-6 md:p-8 text-center mx-auto max-w-xs md:max-w-sm">
           <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-4">
             <Image
               src={review.image || "/placeholder.svg"}

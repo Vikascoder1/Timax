@@ -87,9 +87,9 @@ function ProductPageContent() {
         </nav>
 
         {/* Product Section */}
-        <div className="px-4 py-6 md:flex md:gap-6 lg:gap-8">
+        <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12 md:flex md:gap-8 lg:gap-12">
           {/* Image Gallery */}
-          <div className="md:flex-1 mb-6 md:mb-0">
+          <div className="md:flex-1 md:max-w-lg lg:max-w-xl mb-6 md:mb-0">
             {/* Main Image */}
             <div className="relative bg-muted rounded-lg overflow-hidden mb-4">
               <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
@@ -142,7 +142,7 @@ function ProductPageContent() {
           </div>
 
           {/* Product Info */}
-          <div className="md:flex-1">
+          <div className="md:flex-1 md:max-w-lg lg:max-w-xl">
             {/* Rating */}
             <div className="flex items-center gap-2 mb-4">
               <div className="flex gap-0.5">
@@ -157,7 +157,7 @@ function ProductPageContent() {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl md:text-3xl font-bold mb-6">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6">
               {product.name}
             </h1>
 
@@ -236,8 +236,8 @@ function ProductPageContent() {
 
             {/* Size selector */}
             <div className="mb-6">
-              <h3 className="font-semibold mb-3">Size</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <h3 className="font-semibold mb-3 text-base md:text-lg">Size</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                 {["12 Inch", "15 Inch", "18 Inch", "27 Inch"].map((size) => (
                   <button
                     key={size}

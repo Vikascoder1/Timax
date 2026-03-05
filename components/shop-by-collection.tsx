@@ -28,18 +28,18 @@ const collections = [
 
 export function ShopByCollection() {
   return (
-    <section className="px-4 py-8">
+    <section className="px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-7xl mx-auto">
       <h2
-        className="text-2xl md:text-3xl font-bold text-center text-foreground text-balance"
+        className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-foreground text-balance"
         style={{ fontFamily: "Georgia, serif" }}
       >
         Shop By Collection
       </h2>
-      <p className="text-center text-muted-foreground mt-2 text-sm">
+      <p className="text-center text-muted-foreground mt-2 text-sm md:text-base max-w-2xl mx-auto">
         Find the Perfect Wall clocks for Every Occasion
       </p>
 
-      <div className="grid grid-cols-2 gap-3 mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mt-6 md:mt-8">
         {collections.map((collection) => (
           <a
             key={collection.label}
